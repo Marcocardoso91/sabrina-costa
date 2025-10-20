@@ -595,10 +595,10 @@ WEBHOOK_SECRET=your_webhook_secret_token_here
 DASHBOARD_URL=https://sabrina-costa.vercel.app
 
 # Evolution API (WhatsApp)
-EVOLUTION_API_URL=https://evolution.macspark.dev
+EVOLUTION_API_URL=https://qrcode.macspark.dev
 EVOLUTION_API_KEY=your_evolution_api_key
 WHATSAPP_INSTANCE=sabrina-instance
-WHATSAPP_NUMBER=+5511999999999
+WHATSAPP_NUMBER=+5531993676989
 
 # Timezone
 TZ=America/Sao_Paulo
