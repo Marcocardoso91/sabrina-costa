@@ -159,7 +159,7 @@
                                     <div class="flex-1">
                                         <div class="flex items-center gap-3 mb-2">
                                             <span class="text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full"
-                                                  :class="formatBadgeClass(post.format)" x-text="post.formatLabel"></span>
+                                                  :class="formatBadgeClass(post.format)" x-text="formatLabel(post.format)"></span>
                                             <span class="flex items-center text-sm text-gray-500">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"></path>
@@ -231,7 +231,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="bg-purple-50 border border-purple-100 rounded-lg p-4">
                         <p class="text-xs text-purple-600 font-semibold uppercase tracking-wide">Formato</p>
-                        <p class="text-lg font-semibold text-purple-800" x-text="modals.details.post.formatLabel"></p>
+                        <p class="text-lg font-semibold text-purple-800" x-text="formatLabel(modals.details.post.format)"></p>
                     </div>
                     <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
                         <p class="text-xs text-blue-600 font-semibold uppercase tracking-wide">Status</p>
@@ -274,12 +274,14 @@
     <script src="assets/js/auth.js"></script>
     <script>
         function scheduleApp() {
+            const STORAGE_KEY = 'dashboard-sabrina-schedule';
             return {
                 user: {},
                 loading: true,
                 posts: [],
                 groupedPosts: [],
                 weeks: [1, 2, 3, 4],
+                useLocalFallback: false,
                 filters: {
                     week: 'all',
                     status: 'all',
@@ -301,7 +303,32 @@
                 },
 
                 async loadPosts() {
-                    // Mock data for protótipo
+                    this.useLocalFallback = false;
+                    let fetchedFromApi = false;
+
+                    try {
+                        const response = await API.schedule.getAll();
+                        if (response?.success && Array.isArray(response.data)) {
+                            this.posts = response.data.map((post) => ({
+                                ...post,
+                                storiesIdeas: post.storiesIdeas || '',
+                                postedAt: post.postedAt || null,
+                            }));
+                            fetchedFromApi = true;
+                            localStorage.removeItem(STORAGE_KEY);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar cronograma no servidor:', error);
+                    }
+
+                    if (!fetchedFromApi) {
+                        this.useLocalFallback = true;
+                        this.posts = this.buildMockPosts();
+                        this.restoreState();
+                    }
+                },
+
+                buildMockPosts() {
                     const baseDate = dayjs();
                     const formats = ['reel', 'carousel', 'stories'];
                     const themes = [
@@ -313,29 +340,25 @@
                         'Erros Comuns e Correções'
                     ];
 
-                    this.posts = [];
+                    const posts = [];
                     for (let week = 1; week <= 4; week++) {
                         for (let i = 0; i < 3; i++) {
-                            this.posts.push({
+                            posts.push({
                                 id: `${week}-${i}`,
                                 date: baseDate.add((week - 1) * 7 + i * 2, 'day').format('YYYY-MM-DD'),
                                 weekNumber: week,
                                 format: formats[i % formats.length],
-                                formatLabel: formats[i % formats.length] === 'reel' ? 'Reels' :
-                                    formats[i % formats.length] === 'carousel' ? 'Carrossel' : 'Stories',
                                 theme: themes[(week + i) % themes.length],
                                 hook: 'Você precisa ver isso AGORA',
                                 cta: ['Salva pra lembrar', 'Comenta SIM se você quer', 'Compartilha com uma amiga'][i % 3],
                                 objective: ['Engajamento', 'Conversão', 'Autoridade'][i % 3],
                                 storiesIdeas: 'Bastidores + Enquete + CTA final',
                                 status: week === 1 && i === 0 ? 'posted' : 'planned',
+                                postedAt: null,
                             });
                         }
                     }
-
-                    // Em produção, substituir pelo endpoint real:
-                    // const response = await API.schedule.getAll();
-                    // this.posts = response.data;
+                    return posts;
                 },
 
                 applyFilters() {
@@ -377,11 +400,17 @@
                         });
                 },
 
-                refresh() {
+                async refresh() {
                     this.loading = true;
-                    setTimeout(() => {
+                    try {
+                        await this.loadPosts();
+                        this.applyFilters();
+                    } catch (error) {
+                        console.error('Erro ao atualizar cronograma:', error);
+                        alert('Não foi possível atualizar o cronograma agora. Tente novamente.');
+                    } finally {
                         this.loading = false;
-                    }, 800);
+                    }
                 },
 
                 formatBadgeClass(format) {
@@ -420,17 +449,99 @@
                     return dayjs(date).format('DD/MM (ddd)');
                 },
 
+                formatLabel(format) {
+                    const labels = {
+                        reel: 'Reels',
+                        carousel: 'Carrossel',
+                        stories: 'Stories',
+                    };
+                    if (labels[format]) return labels[format];
+                    if (typeof format === 'string' && format.length) {
+                        return format.charAt(0).toUpperCase() + format.slice(1);
+                    }
+                    return 'Formato';
+                },
+
                 async markAsPosted(post) {
+                    const previousStatus = post.status;
+                    const previousPostedAt = post.postedAt;
                     post.status = 'posted';
                     post.postedAt = dayjs().toISOString();
                     this.applyFilters();
 
-                    // Produção: await API.schedule.update(post.id, { status: 'posted' });
+                    try {
+                        if (this.useLocalFallback || !post.id || String(post.id).includes('-')) {
+                            this.persistState();
+                        } else {
+                            const response = await API.schedule.update(post.id, {
+                                status: 'posted',
+                                postedAt: post.postedAt,
+                            });
+                            if (response?.success && response.data) {
+                                post.status = response.data.status;
+                                post.postedAt = response.data.postedAt || post.postedAt;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Erro ao atualizar status do post:', error);
+                        post.status = previousStatus;
+                        post.postedAt = previousPostedAt;
+                        this.applyFilters();
+                        alert('Não foi possível atualizar o status. Tente novamente.');
+                    } finally {
+                        if (this.useLocalFallback) {
+                            this.persistState();
+                        }
+                    }
                 },
 
                 openDetails(post) {
                     this.modals.details.post = post;
                     this.modals.details.open = true;
+                },
+
+                persistState() {
+                    if (!this.useLocalFallback) return;
+                    try {
+                        const state = this.posts.reduce((acc, post) => {
+                            acc[post.id] = {
+                                status: post.status,
+                                postedAt: post.postedAt || null,
+                            };
+                            return acc;
+                        }, {});
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                    } catch (error) {
+                        console.error('Erro ao salvar estado do cronograma:', error);
+                    }
+                },
+
+                loadState() {
+                    if (!this.useLocalFallback) return null;
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (!saved) return null;
+                    try {
+                        return JSON.parse(saved);
+                    } catch (error) {
+                        console.error('Erro ao carregar estado do cronograma:', error);
+                        localStorage.removeItem(STORAGE_KEY);
+                        return null;
+                    }
+                },
+
+                restoreState() {
+                    if (!this.useLocalFallback) return;
+                    const savedState = this.loadState();
+                    if (!savedState) return;
+                    this.posts = this.posts.map((post) => {
+                        const persisted = savedState[post.id];
+                        if (!persisted) return post;
+                        return {
+                            ...post,
+                            status: persisted.status || post.status,
+                            postedAt: persisted.postedAt || post.postedAt || null,
+                        };
+                    });
                 },
             }
         }

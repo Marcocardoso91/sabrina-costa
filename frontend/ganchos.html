@@ -191,6 +191,7 @@
     <script src="assets/js/auth.js"></script>
     <script>
         function hooksApp() {
+            const FAVORITES_KEY = 'dashboard-sabrina-hooks-favorites';
             return {
                 user: {},
                 hooks: [],
@@ -199,6 +200,7 @@
                 selectedCategory: 'Todos',
                 search: '',
                 highlights: [],
+                useLocalFallback: false,
 
                 async init() {
                     this.user = Auth.getUser() || { name: 'Usuário' };
@@ -208,7 +210,37 @@
                 },
 
                 async loadHooks() {
-                    // Mock list replicating 50 hooks (simplified sample)
+                    this.useLocalFallback = false;
+                    let fetchedFromApi = false;
+
+                    try {
+                        const response = await API.hooks.getAll();
+                        if (response?.success && Array.isArray(response.data)) {
+                            this.hooks = response.data.map((hook) => ({
+                                ...hook,
+                                favorite: false,
+                            }));
+                            if (Array.isArray(response.categories) && response.categories.length) {
+                                this.categories = response.categories;
+                            } else {
+                                this.categories = [...new Set(this.hooks.map((hook) => hook.category))];
+                            }
+                            fetchedFromApi = true;
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar ganchos no servidor:', error);
+                    }
+
+                    if (!fetchedFromApi) {
+                        this.useLocalFallback = true;
+                        this.hooks = this.buildMockHooks();
+                        this.categories = [...new Set(this.hooks.map((hook) => hook.category))];
+                    }
+
+                    this.restoreFavorites();
+                },
+
+                buildMockHooks() {
                     const baseHooks = [
                         { category: 'Curiosidade', text: 'O que NINGUÉM te conta sobre...' },
                         { category: 'Urgência', text: 'Você está perdendo oportunidades porque ainda faz isso assim?' },
@@ -222,7 +254,7 @@
                         { category: 'Desafio', text: 'Topa um desafio de 7 dias para transformar o seu Instagram?' },
                     ];
 
-                    this.hooks = Array.from({ length: 50 }, (_, index) => {
+                    return Array.from({ length: 50 }, (_, index) => {
                         const base = baseHooks[index % baseHooks.length];
                         return {
                             id: `hook-${index + 1}`,
@@ -232,13 +264,6 @@
                             favorite: false,
                         };
                     });
-
-                    this.categories = [...new Set(this.hooks.map((hook) => hook.category))];
-
-                    // Produção:
-                    // const response = await API.hooks.getAll();
-                    // this.hooks = response.data;
-                    // this.categories = response.categories;
                 },
 
                 applyFilters() {
@@ -264,8 +289,22 @@
 
                 async copyHook(hook) {
                     await this.copyToClipboard(hook.text);
-                    hook.usageCount += 1;
-                    // Produção: await API.hooks.increment(hook.id);
+                    try {
+                        if (!this.useLocalFallback && hook.id && !String(hook.id).startsWith('hook-')) {
+                            const response = await API.hooks.increment(hook.id);
+                            if (response?.success && response.data) {
+                                hook.usageCount = response.data.usageCount;
+                            } else {
+                                hook.usageCount += 1;
+                            }
+                        } else {
+                            hook.usageCount += 1;
+                        }
+                    } catch (error) {
+                        console.error('Erro ao atualizar uso do gancho:', error);
+                        hook.usageCount += 1;
+                    }
+                    this.generateHighlights();
                 },
 
                 async copyToClipboard(text) {
@@ -274,18 +313,50 @@
                         this.showToast('Gancho copiado com sucesso!');
                     } catch (error) {
                         console.error('Erro ao copiar gancho', error);
+                        alert('Não foi possível copiar o gancho automaticamente. Copie manualmente.');
                     }
                 },
 
                 toggleFavorite(hook) {
                     hook.favorite = !hook.favorite;
+                    this.generateHighlights();
+                    this.persistFavorites();
                 },
 
                 generateHighlights() {
-                    this.highlights = this.hooks
+                    this.highlights = [...this.hooks]
                         .sort((a, b) => b.usageCount - a.usageCount)
                         .slice(0, 4)
                         .map((hook) => hook.text);
+                },
+
+                persistFavorites() {
+                    try {
+                        const payload = this.hooks
+                            .filter((hook) => hook.favorite)
+                            .map((hook) => hook.id);
+                        localStorage.setItem(FAVORITES_KEY, JSON.stringify(payload));
+                    } catch (error) {
+                        console.error('Erro ao salvar estado dos ganchos:', error);
+                    }
+                },
+
+                restoreFavorites() {
+                    const saved = localStorage.getItem(FAVORITES_KEY);
+                    if (!saved) return;
+                    try {
+                        const payload = JSON.parse(saved);
+                        const favorites = Array.isArray(payload) ? new Set(payload) : new Set();
+                        this.hooks = this.hooks.map((hook) => {
+                            return {
+                                ...hook,
+                                favorite: favorites.has(hook.id),
+                            };
+                        });
+                    } catch (error) {
+                        console.error('Erro ao restaurar estado dos ganchos:', error);
+                        localStorage.removeItem(FAVORITES_KEY);
+                    }
                 },
 
                 showToast(message) {

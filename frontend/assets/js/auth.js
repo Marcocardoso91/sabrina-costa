@@ -34,20 +34,20 @@ const Auth = {
     // Logout
     logout() {
         this.clearAuth();
-        window.location.href = '/index.html';
+        window.location.href = 'index.html';
     },
 
     // Protect page (redirect to login if not authenticated)
     protectPage() {
         if (!this.isAuthenticated()) {
-            window.location.href = '/index.html';
+            window.location.href = 'index.html';
         }
     },
 
     // Redirect to dashboard if already authenticated
     redirectIfAuthenticated() {
         if (this.isAuthenticated()) {
-            window.location.href = '/dashboard.html';
+            window.location.href = 'dashboard.html';
         }
     }
 };

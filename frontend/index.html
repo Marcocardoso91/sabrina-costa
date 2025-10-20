@@ -22,8 +22,8 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.18);
         }
-        .hidden-element {
-            display: none;
+        [x-cloak] {
+            display: none !important;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -54,9 +54,10 @@
             
             <!-- Alert Message -->
             <div x-show="alert.show" 
+                 x-cloak
                  x-transition
                  :class="alert.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'"
-                 class="mb-4 p-4 rounded-lg border hidden-element">
+                 class="mb-4 p-4 rounded-lg border">
                 <p x-text="alert.message"></p>
             </div>
 
@@ -117,7 +118,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
-                            <svg x-show="showPassword" class="h-5 w-5 text-gray-400 hover:text-gray-600 hidden-element" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg x-show="showPassword" x-cloak class="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
                             </svg>
                         </button>
@@ -147,7 +148,7 @@
                     class="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
                     aria-label="Fazer login no dashboard"
                 >
-                    <svg x-show="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden-element" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg x-show="loading" x-cloak class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -155,12 +156,6 @@
                 </button>
             </form>
 
-            <!-- Demo Credentials (Remove in production) -->
-            <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p class="text-xs text-blue-800 font-semibold mb-2">🔐 Credenciais de Demo:</p>
-                <p class="text-xs text-blue-600"><strong>Email:</strong> gerente@macspark.dev</p>
-                <p class="text-xs text-blue-600"><strong>Senha:</strong> Sabrina2025!</p>
-            </div>
         </div>
 
         <!-- Footer -->
@@ -193,48 +188,34 @@
                     this.alert.show = false;
 
                     try {
-                        // Simulate API call (replace with actual API call)
-                        // const response = await fetch('/api/auth/login', {...});
-                        
-                        // Mock login para desenvolvimento
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        
-                        if (this.formData.email === 'gerente@macspark.dev' && this.formData.password === 'Sabrina2025!') {
-                            // Sucesso
-                            const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_token';
-                            const mockUser = {
-                                id: '1',
-                                email: this.formData.email,
-                                name: 'Marco',
-                                role: 'admin'
-                            };
+                        const response = await API.auth.login(this.formData.email, this.formData.password);
+                        const token = response?.token;
+                        const user = response?.user;
 
-                            // Salvar no localStorage
-                            localStorage.setItem('token', mockToken);
-                            localStorage.setItem('user', JSON.stringify(mockUser));
-
-                            // Mostrar sucesso
-                            this.alert = {
-                                show: true,
-                                type: 'success',
-                                message: '✓ Login realizado com sucesso!'
-                            };
-
-                            // Redirecionar para dashboard
-                            setTimeout(() => {
-                                window.location.href = 'dashboard.html';
-                            }, 1000);
-
-                        } else {
-                            throw new Error('Credenciais inválidas');
+                        if (!token || !user) {
+                            throw new Error('Não foi possível autenticar.');
                         }
 
+                        Auth.saveAuth(token, user);
+
+                        this.alert = {
+                            show: true,
+                            type: 'success',
+                            message: '✓ Login realizado com sucesso!'
+                        };
+
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 600);
+
                     } catch (error) {
+                        console.error('Erro no login:', error);
                         this.alert = {
                             show: true,
                             type: 'error',
                             message: error.message || 'Erro ao fazer login. Verifique suas credenciais.'
                         };
+                    } finally {
                         this.loading = false;
                     }
                 }

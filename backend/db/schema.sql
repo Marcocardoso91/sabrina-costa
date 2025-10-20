@@ -161,7 +161,7 @@ INSERT INTO config (key, value) VALUES
     "cost_per_follower_max": 1.30
 }'::jsonb),
 ('whatsapp', '{
-    "number": "+5511999999999",
+    "number": "+5531993676989",
     "enabled": true
 }'::jsonb),
 ('alerts_schedule', '{

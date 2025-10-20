@@ -290,6 +290,7 @@
         </section>
     </main>
 
+    <script src="assets/js/auth.js"></script>
     <script>
         function configApp() {
             const DEFAULT_CONFIG = {
@@ -345,7 +346,10 @@
                     this.forms = {
                         thresholds: { ...this.config.thresholds },
                         whatsapp: { ...this.config.whatsapp },
-                        schedule: { ...this.config.schedule },
+                        schedule: {
+                            ...this.config.schedule,
+                            postReminders: [...(this.config.schedule.postReminders || [])],
+                        },
                         general: { ...this.config.general },
                     };
                 },
@@ -378,7 +382,10 @@
                     this.saving.schedule = true;
                     this.clearFeedback();
                     setTimeout(() => {
-                        this.config.schedule = { ...this.forms.schedule };
+                        this.config.schedule = {
+                            ...this.forms.schedule,
+                            postReminders: [...(this.forms.schedule.postReminders || [])],
+                        };
                         this.feedback.schedule = 'Rotinas atualizadas. Recarregue os fluxos no n8n.';
                         this.saving.schedule = false;
                         // Produção: salvar em config table / n8n webhook
@@ -398,17 +405,26 @@
                 },
 
                 addReminder() {
+                    if (!Array.isArray(this.forms.schedule.postReminders)) {
+                        this.forms.schedule.postReminders = [];
+                    }
                     this.forms.schedule.postReminders.push('12:00');
                 },
 
                 removeReminder(index) {
+                    if (!Array.isArray(this.forms.schedule.postReminders)) return;
                     this.forms.schedule.postReminders.splice(index, 1);
                 },
 
                 copyValue(value) {
-                    navigator.clipboard.writeText(value).then(() => {
-                        this.feedback.general = 'Valor copiado para o clipboard!';
-                    });
+                    navigator.clipboard.writeText(value)
+                        .then(() => {
+                            this.feedback.general = 'Valor copiado para o clipboard!';
+                        })
+                        .catch((error) => {
+                            console.error('Erro ao copiar valor:', error);
+                            alert('Não foi possível copiar automaticamente. Copie manualmente.');
+                        });
                 },
 
                 maskToken(token) {

@@ -196,6 +196,7 @@
     </main>
 
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
     <script>
         function reportsApp() {
             return {
@@ -363,9 +364,14 @@
                         `${this.formatDate(row.date)} | ${row.format} | ${row.theme} | ${row.ctr}% | ${row.newFollowers} seguidores | ${row.saves} salvamentos | R$ ${row.cost}`
                     )).join('\n');
 
-                    navigator.clipboard.writeText(text).then(() => {
-                        alert('Tabela copiada para a área de transferência!');
-                    });
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            alert('Tabela copiada para a área de transferência!');
+                        })
+                        .catch((error) => {
+                            console.error('Erro ao copiar tabela:', error);
+                            alert('Não foi possível copiar automaticamente. Copie manualmente.');
+                        });
                 },
             }
         }
