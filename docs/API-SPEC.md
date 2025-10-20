@@ -3,7 +3,7 @@
 
 **Versão:** 1.0  
 **Base URL (Dev):** `http://localhost:3000/api`  
-**Base URL (Prod):** `https://dashboard-sabrina.vercel.app/api`  
+**Base URL (Prod):** `https://sabrina-costa-backend.vercel.app/api`  
 **Autenticação:** Bearer Token (JWT)
 
 ---
@@ -1056,7 +1056,7 @@ Futuramente:
 
 ```javascript
 // 1. Login
-const loginResponse = await fetch('https://dashboard-sabrina.vercel.app/api/auth/login', {
+const loginResponse = await fetch('https://sabrina-costa-backend.vercel.app/api/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -1068,7 +1068,7 @@ const loginResponse = await fetch('https://dashboard-sabrina.vercel.app/api/auth
 const { token } = await loginResponse.json();
 
 // 2. Buscar métricas dos últimos 7 dias
-const metricsResponse = await fetch('https://dashboard-sabrina.vercel.app/api/metrics?period=7d', {
+const metricsResponse = await fetch('https://sabrina-costa-backend.vercel.app/api/metrics?period=7d', {
   headers: {
     'Authorization': `Bearer ${token}`
   }
@@ -1082,7 +1082,7 @@ console.log(metrics);
 
 ```javascript
 // No n8n (HTTP Request Node)
-const response = await fetch('https://dashboard-sabrina.vercel.app/api/webhook/metrics', {
+const response = await fetch('https://sabrina-costa-backend.vercel.app/api/webhook/metrics', {
   method: 'POST',
   headers: {
     'X-Webhook-Token': 'secret_webhook_token_here',

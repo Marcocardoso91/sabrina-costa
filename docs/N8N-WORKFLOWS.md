@@ -590,9 +590,9 @@ Acessar: **Settings → Environments**
 
 ```bash
 # API Backend
-API_BASE_URL=https://dashboard-sabrina.vercel.app
+API_BASE_URL=https://sabrina-costa-backend.vercel.app
 WEBHOOK_SECRET=your_webhook_secret_token_here
-DASHBOARD_URL=https://dashboard-sabrina.vercel.app
+DASHBOARD_URL=https://sabrina-costa.vercel.app
 
 # Evolution API (WhatsApp)
 EVOLUTION_API_URL=https://evolution.macspark.dev

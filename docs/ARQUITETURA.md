@@ -867,7 +867,7 @@ DATABASE_URL=postgresql://user:pass@host:5432/db
 JWT_SECRET=super_secret_key_change_in_production
 JWT_EXPIRES_IN=7d
 WEBHOOK_SECRET=webhook_secret_token
-CORS_ORIGIN=https://dashboard-sabrina.vercel.app
+CORS_ORIGIN=https://sabrina-costa.vercel.app
 NODE_ENV=production
 
 # n8n (já configurado)
