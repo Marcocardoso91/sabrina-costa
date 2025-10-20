@@ -1,8 +1,10 @@
 // API Configuration and HTTP Client
-// Dashboard Sabrina Blogueira
+// Dashboard Sabrina Costa
 
 const API_CONFIG = {
-    baseURL: 'http://localhost:3000/api', // Alterar para produção
+    baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000/api'
+        : '/api', // Proxy via vercel.json
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json'

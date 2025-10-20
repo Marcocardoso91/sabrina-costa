@@ -1,5 +1,5 @@
 // Authentication Helper
-// Dashboard Sabrina Blogueira
+// Dashboard Sabrina Costa
 
 const Auth = {
     // Check if user is authenticated

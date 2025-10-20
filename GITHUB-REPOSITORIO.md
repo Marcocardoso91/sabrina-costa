@@ -9,9 +9,9 @@
 - **Visibilidade:** Público
 
 ### **Local:**
-- **Caminho:** `C:\Users\marco\Macspark\Projeto Esposo Trofeu 2026\sabrina-costa\`
+- **Caminho:** `C:\Users\marco\Macspark\sabrina-costa\`
 - **Git Status:** ✅ Sincronizado
-- **Último Commit:** d662d65 (feat: Dashboard Sabrina Costa - Projeto completo)
+- **Último Commit:** Projeto 95% completo - pronto para deploy
 
 ---
 
@@ -165,13 +165,13 @@ cd sabrina-costa
 
 ### **Atualizar do GitHub:**
 ```bash
-cd "C:\Users\marco\Macspark\Projeto Esposo Trofeu 2026\sabrina-costa"
+cd "C:\Users\marco\Macspark\sabrina-costa"
 git pull origin main
 ```
 
 ### **Enviar mudanças:**
 ```bash
-cd "C:\Users\marco\Macspark\Projeto Esposo Trofeu 2026\sabrina-costa"
+cd "C:\Users\marco\Macspark\sabrina-costa"
 git add .
 git commit -m "feat: descrição da mudança"
 git push origin main
@@ -202,25 +202,34 @@ git log --oneline --graph --all
 
 ```
 Frontend:    ✅ 100% Completo (7 páginas)
-Backend:     ✅ 100% Completo (8 endpoints)
-n8n:         ✅ 100% Completo (4 workflows)
+Backend:     ✅ 100% Completo (7 endpoints + server.js)
+n8n:         ✅ 100% Completo (4 workflows JSON prontos)
 Docs:        ✅ 100% Completo (18.000+ linhas)
-Testes:      ✅ Plano de 82 testes criado
-Deploy:      ⏳ Aguardando deploy Vercel
+Banco:       ✅ 100% Schema SQL completo + seeds
+Deploy:      🟡 80% Configurações prontas (aguardando execução)
 Validação:   ✅ Score 4.9/5.0
 
-STATUS GERAL: ✅ PRONTO PARA PRODUÇÃO
+STATUS GERAL: ✅ 95% COMPLETO - PRONTO PARA DEPLOY
 ```
 
 ---
 
 ## 🎉 **PRÓXIMOS PASSOS**
 
-1. ✅ **GitHub configurado** - Projeto já está salvo!
-2. ⏳ **Deploy Vercel** - Seguir `DEPLOY-FINAL.md`
-3. ⏳ **Configurar PostgreSQL** - Railway ou Supabase
-4. ⏳ **Importar workflows n8n** - Importar 4 JSONs
-5. ⏳ **Testar end-to-end** - Executar `PLANO-TESTES-COMPLETO.md`
+### ✅ Completo (95%):
+1. ✅ **Código fonte** - Frontend, Backend, n8n 100% prontos
+2. ✅ **Documentação** - 18.000+ linhas completas
+3. ✅ **GitHub configurado** - Projeto salvo e versionado
+4. ✅ **Configurações de deploy** - Vercel.json, env.example prontos
+
+### 🟡 Restante (5% - Deploy):
+1. ⏳ **Provisionar PostgreSQL** - Supabase ou Railway (15 min)
+2. ⏳ **Deploy Vercel** - Backend + Frontend (10 min)
+3. ⏳ **Importar workflows n8n** - 4 JSONs no fluxos.macspark.dev (20 min)
+4. ⏳ **Testes end-to-end** - Validação final (30 min)
+
+**📖 Guia completo:** `DEPLOY-FINAL.md`  
+**⏱️ Tempo estimado:** 1-2 horas
 
 ---
 

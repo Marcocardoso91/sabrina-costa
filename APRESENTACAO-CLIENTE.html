@@ -316,14 +316,14 @@
             </div>
 
             <div class="bg-gradient-to-br from-purple-500 to-indigo-600 p-8 rounded-xl shadow-2xl text-white">
-                <h3 class="text-3xl font-bold mb-4">⏱️ Tempo de Deploy</h3>
-                <p class="text-6xl font-bold mb-2">2-30</p>
-                <p class="text-xl opacity-90">minutos</p>
+                <h3 class="text-3xl font-bold mb-4">⏱️ Tempo para Deploy</h3>
+                <p class="text-6xl font-bold mb-2">1-2</p>
+                <p class="text-xl opacity-90">horas (total)</p>
                 <div class="mt-6 space-y-2 text-sm">
-                    <p>✓ Frontend visual: 2 minutos</p>
-                    <p>✓ Backend completo: 10 minutos</p>
-                    <p>✓ Banco de dados: 10 minutos</p>
-                    <p>✓ n8n workflows: 15 minutos</p>
+                    <p>✓ Banco PostgreSQL: 15 minutos</p>
+                    <p>✓ Deploy Vercel (frontend + backend): 10 minutos</p>
+                    <p>✓ Importar workflows n8n: 20 minutos</p>
+                    <p>✓ Testes e validação: 30 minutos</p>
                 </div>
             </div>
         </div>
@@ -354,40 +354,42 @@
         <div class="space-y-6">
             <!-- Já Concluído -->
             <div class="bg-green-50 border-l-4 border-green-600 p-6 rounded-r-xl">
-                <h3 class="text-2xl font-bold text-green-900 mb-4">✅ Já Concluído (60%)</h3>
+                <h3 class="text-2xl font-bold text-green-900 mb-4">✅ Já Concluído (95%)</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <p class="font-semibold text-green-800">✓ Documentação completa (18.000+ linhas)</p>
-                        <p class="font-semibold text-green-800">✓ Frontend base (login + dashboard)</p>
-                        <p class="font-semibold text-green-800">✓ Schema banco de dados completo</p>
+                        <p class="font-semibold text-green-800">✓ Documentação completa (PRD, Arquitetura, API, Deploy)</p>
+                        <p class="font-semibold text-green-800">✓ Frontend 100% (7 páginas completas)</p>
+                        <p class="font-semibold text-green-800">✓ Backend 100% (7 endpoints + utils + JWT)</p>
+                        <p class="font-semibold text-green-800">✓ Schema banco de dados + seeds</p>
                     </div>
                     <div>
-                        <p class="font-semibold text-green-800">✓ Conexão PostgreSQL configurada</p>
+                        <p class="font-semibold text-green-800">✓ 4 workflows n8n prontos (JSON importáveis)</p>
                         <p class="font-semibold text-green-800">✓ Sistema de autenticação JWT</p>
                         <p class="font-semibold text-green-800">✓ 50 ganchos virais catalogados</p>
+                        <p class="font-semibold text-green-800">✓ Configs de deploy (Vercel + Supabase)</p>
                     </div>
                 </div>
             </div>
 
             <!-- Em Desenvolvimento -->
             <div class="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded-r-xl">
-                <h3 class="text-2xl font-bold text-yellow-900 mb-4">🟡 Próximos Passos (40%)</h3>
+                <h3 class="text-2xl font-bold text-yellow-900 mb-4">🟡 Próximos Passos (5%)</h3>
                 <div class="space-y-3">
                     <div class="flex items-center">
-                        <span class="text-2xl mr-3">📅</span>
-                        <p><strong>Semana 1:</strong> Completar backend + frontend restante (8-10h)</p>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="text-2xl mr-3">🤖</span>
-                        <p><strong>Semana 1:</strong> Criar 4 workflows n8n (2-3h)</p>
+                        <span class="text-2xl mr-3">🗄️</span>
+                        <p><strong>Passo 1:</strong> Provisionar banco PostgreSQL (Supabase/Render) e aplicar schema.sql (15 min)</p>
                     </div>
                     <div class="flex items-center">
                         <span class="text-2xl mr-3">🚀</span>
-                        <p><strong>Semana 1:</strong> Deploy Vercel + banco + n8n (1-2h)</p>
+                        <p><strong>Passo 2:</strong> Deploy backend + frontend na Vercel com variáveis de ambiente (10 min)</p>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">🤖</span>
+                        <p><strong>Passo 3:</strong> Importar 4 workflows n8n e configurar Evolution API (20 min)</p>
                     </div>
                     <div class="flex items-center">
                         <span class="text-2xl mr-3">✅</span>
-                        <p><strong>Semana 1:</strong> Testes e ajustes finais (1-2h)</p>
+                        <p><strong>Passo 4:</strong> Testes de QA e ajustes finais (30 min)</p>
                     </div>
                 </div>
             </div>
@@ -407,38 +409,47 @@
                     </div>
                     <div>
                         <div class="flex justify-between mb-2">
-                            <span class="font-semibold">Frontend</span>
-                            <span class="text-blue-600 font-bold">75%</span>
+                            <span class="font-semibold">Frontend (7 páginas)</span>
+                            <span class="text-green-600 font-bold">100%</span>
                         </div>
                         <div class="h-4 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="h-full bg-blue-500" style="width: 75%"></div>
+                            <div class="h-full bg-green-500" style="width: 100%"></div>
                         </div>
                     </div>
                     <div>
                         <div class="flex justify-between mb-2">
-                            <span class="font-semibold">Backend</span>
-                            <span class="text-yellow-600 font-bold">40%</span>
+                            <span class="font-semibold">Backend (7 endpoints)</span>
+                            <span class="text-green-600 font-bold">100%</span>
                         </div>
                         <div class="h-4 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="h-full bg-yellow-500" style="width: 40%"></div>
+                            <div class="h-full bg-green-500" style="width: 100%"></div>
                         </div>
                     </div>
                     <div>
                         <div class="flex justify-between mb-2">
-                            <span class="font-semibold">n8n Workflows</span>
-                            <span class="text-red-600 font-bold">0%</span>
+                            <span class="font-semibold">n8n Workflows (4 JSONs)</span>
+                            <span class="text-green-600 font-bold">100%</span>
                         </div>
                         <div class="h-4 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="h-full bg-red-500" style="width: 0%"></div>
+                            <div class="h-full bg-green-500" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-semibold">Deploy (aguardando execução)</span>
+                            <span class="text-yellow-600 font-bold">80%</span>
+                        </div>
+                        <div class="h-4 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-yellow-500" style="width: 80%"></div>
                         </div>
                     </div>
                     <div class="pt-4 border-t-2">
                         <div class="flex justify-between mb-2">
                             <span class="font-bold text-lg">TOTAL GERAL</span>
-                            <span class="text-purple-600 font-bold text-lg">60%</span>
+                            <span class="text-green-600 font-bold text-lg">95%</span>
                         </div>
                         <div class="h-6 bg-gray-200 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-r from-purple-600 to-indigo-600" style="width: 60%"></div>
+                            <div class="h-full bg-gradient-to-r from-green-500 to-emerald-600" style="width: 95%"></div>
                         </div>
                     </div>
                 </div>
@@ -457,19 +468,19 @@
                 <div class="space-y-6 text-left text-lg">
                     <div class="flex items-start">
                         <span class="text-3xl mr-4">1️⃣</span>
-                        <p><strong>Revisar documentação</strong> em <code class="bg-white/30 px-2 py-1 rounded">sabrina-costa/docs/</code></p>
+                        <p><strong>Revisar documentação</strong> em <code class="bg-white/30 px-2 py-1 rounded">docs/DEPLOY.md</code></p>
                     </div>
                     <div class="flex items-start">
                         <span class="text-3xl mr-4">2️⃣</span>
-                        <p><strong>Testar frontend</strong> abrindo <code class="bg-white/30 px-2 py-1 rounded">frontend/index.html</code></p>
+                        <p><strong>Testar frontend localmente</strong> abrindo <code class="bg-white/30 px-2 py-1 rounded">frontend/dashboard.html</code></p>
                     </div>
                     <div class="flex items-start">
                         <span class="text-3xl mr-4">3️⃣</span>
-                        <p><strong>Continuar implementação</strong> seguindo <code class="bg-white/30 px-2 py-1 rounded">PROGRESSO.md</code></p>
+                        <p><strong>Provisionar banco PostgreSQL</strong> no Supabase ou Render</p>
                     </div>
                     <div class="flex items-start">
                         <span class="text-3xl mr-4">4️⃣</span>
-                        <p><strong>Deploy na Vercel</strong> quando estiver pronto</p>
+                        <p><strong>Fazer deploy final</strong> seguindo guia em <code class="bg-white/30 px-2 py-1 rounded">docs/DEPLOY.md</code></p>
                     </div>
                 </div>
 
