@@ -1,4 +1,4 @@
--- Database Schema for Dashboard Sabrina Blogueira
+-- Database Schema for Dashboard Sabrina Costa
 -- PostgreSQL 15+
 -- Versão: 1.0
 -- Data: 20/10/2025

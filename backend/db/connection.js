@@ -1,6 +1,6 @@
 /**
  * Database Connection Pool
- * Dashboard Sabrina Blogueira
+ * Dashboard Sabrina Costa
  */
 
 const { Pool } = require('pg');
