@@ -16,7 +16,8 @@
 |-------|---------|---------|-------|
 | 1º | [`COMECE-AQUI.md`](COMECE-AQUI.md) | 🎯 Guia rápido de início | 5 min |
 | 2º | [`PERGUNTAS-E-RESPOSTAS.md`](PERGUNTAS-E-RESPOSTAS.md) | ❓ FAQ completo | 5 min |
-| 3º | [`RESUMO-EXECUTIVO.md`](RESUMO-EXECUTIVO.md) | 📊 Vista executiva | 10 min |
+| 3º | [`STATUS-FINAL-PLANO.md`](STATUS-FINAL-PLANO.md) | 📊 Status consolidado | 7 min |
+| 4º | [`README.md`](README.md) | 📘 Manual técnico | 15 min |
 
 ### 2️⃣ **Quer Ver Funcionando?**
 
@@ -59,10 +60,9 @@ APRESENTACAO-CLIENTE.html
 | Arquivo | Descrição | Uso |
 |---------|-----------|-----|
 | [`README.md`](README.md) | Manual completo do projeto | Leitura geral |
-| [`RESUMO-EXECUTIVO.md`](RESUMO-EXECUTIVO.md) | Overview executivo | Tomada de decisão |
-| [`PROGRESSO.md`](PROGRESSO.md) | Status e próximos passos | Acompanhamento |
+| [`STATUS-FINAL-PLANO.md`](STATUS-FINAL-PLANO.md) | Status e próximos passos | Acompanhamento |
 | [`COMECE-AQUI.md`](COMECE-AQUI.md) | Guia rápido de início | Navegação |
-| [`DEPLOY-FINAL.md`](DEPLOY-FINAL.md) | Guia de deploy | Colocar no ar |
+| [`DEPLOY-MANUAL-ATUALIZADO.md`](DEPLOY-MANUAL-ATUALIZADO.md) | Guia de deploy | Colocar no ar |
 
 ### Apresentação (Para Clientes)
 
@@ -163,7 +163,7 @@ APRESENTACAO-CLIENTE.html
 | 🚀 Deploy | 80% | 🟡 Aguardando Execução |
 | **TOTAL** | **95%** | 🟢 **Pronto para Deploy** |
 
-**📊 Ver:** [`PROGRESSO.md`](PROGRESSO.md) para detalhes completos
+**📊 Ver:** [`STATUS-FINAL-PLANO.md`](STATUS-FINAL-PLANO.md) para detalhes completos
 
 ---
 
@@ -208,9 +208,8 @@ APRESENTACAO-CLIENTE.html
 │
 ├─ 📊 Documentação Executiva
 │  ├─ README.md                   ← Manual completo
-│  ├─ RESUMO-EXECUTIVO.md         ← Overview
-│  ├─ PROGRESSO.md                ← Status atual
-│  ├─ DEPLOY-FINAL.md             ← Guia de deploy
+│  ├─ STATUS-FINAL-PLANO.md       ← Status consolidado
+│  ├─ DEPLOY-MANUAL-ATUALIZADO.md ← Guia de deploy
 │  └─ APRESENTACAO-CLIENTE.html   ← PDF para cliente
 │
 ├─ 📚 Documentação Técnica
@@ -242,7 +241,7 @@ APRESENTACAO-CLIENTE.html
 | 🔍 Ver código funcionando | Abrir `frontend/index.html` |
 | 📊 Apresentar cliente | Abrir `APRESENTACAO-CLIENTE.html` |
 | 📖 Ler documentação | Abrir `docs/PRD.md` |
-| 🚀 Continuar implementação | Ler `PROGRESSO.md` |
+| 🚀 Continuar implementação | Ler `STATUS-FINAL-PLANO.md` |
 | 📂 Ver dados originais | Abrir `dados-originais/README.md` |
 
 ---
@@ -292,7 +291,7 @@ Salvar como PDF
 
 **3. Fazer deploy (1-2h):**
 ```
-Seguir guia completo em DEPLOY-FINAL.md
+Seguir guia completo em DEPLOY-MANUAL-ATUALIZADO.md
 - Provisionar PostgreSQL (15 min)
 - Deploy Vercel (10 min)
 - Importar workflows n8n (20 min)

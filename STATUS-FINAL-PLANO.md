@@ -59,7 +59,7 @@ Todo o código está implementado, testado e salvo no GitHub!
 ### Fase 5: Integração e Deploy (1 hora) - 🟡 50%
 - [x] Conectar frontend + backend (código pronto)
 - [x] Configurações Vercel criadas (`frontend/vercel.json` + `backend/vercel.json`)
-- [x] Variáveis de ambiente documentadas (`env.example` + `DEPLOY-FINAL.md`)
+- [x] Variáveis de ambiente documentadas (`env.example` + `DEPLOY-MANUAL-ATUALIZADO.md`)
 - [ ] ⏳ Deploy efetivo executado (comando `vercel`)
 - [ ] ⏳ Testes end-to-end em produção
 
@@ -182,6 +182,39 @@ TOTAL DO PLANO:         ██████████████████�
 
 ---
 
+## 🧪 CHECKLIST DE QA ANTES DO DEPLOY
+
+### 1. QA Local (Backend + Frontend)
+```bash
+cd backend
+cp .env.example .env  # preencher credenciais
+npm install
+npm run dev
+
+# Em outro terminal
+curl http://localhost:3000/api/health
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"gerente@macspark.dev","password":"Sabrina2025!"}'
+```
+
+### 2. Validar Páginas Integradas
+- Atualizar `frontend/assets/js/api.js` com a `baseURL` local ou remota.
+- Servir a pasta `frontend/` via `python -m http.server 8000` ou `npx serve`.
+- Navegar por todas as páginas protegidas (cronograma, ganchos, checklist, relatórios, configurações).
+
+### 3. Testar Workflows n8n
+- Importar os 4 arquivos de `n8n/workflows/`.
+- Configurar variáveis `API_BASE_URL`, `WEBHOOK_SECRET`, `EVOLUTION_API_*`.
+- Executar cada workflow em modo **Execute once** para validar payloads.
+
+### 4. Evolução para Produção
+- Provisionar PostgreSQL (Supabase/Render) e aplicar `db/schema.sql`.
+- Deploy backend + frontend via Vercel.
+- Atualizar variáveis do n8n e Evolution API.
+
+---
+
 ## 🎉 CONCLUSÃO
 
 ### ✅ **TODO O CÓDIGO DO PLANO FOI IMPLEMENTADO!**
@@ -202,7 +235,7 @@ TOTAL DO PLANO:         ██████████████████�
 
 **Para colocar NO AR:**
 
-1. Ler `DEPLOY-FINAL.md` (guia passo a passo)
+1. Ler `DEPLOY-MANUAL-ATUALIZADO.md` (guia passo a passo)
 2. Seguir checklist de deploy
 3. Executar comandos Vercel
 4. Configurar banco Supabase

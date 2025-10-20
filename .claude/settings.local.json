@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(npm install -g vercel)",
+      "Bash(vercel --version)",
+      "Bash(node -e \"console.log(''JWT_SECRET='' + require(''crypto'').randomBytes(32).toString(''base64'')); console.log(''WEBHOOK_SECRET='' + require(''crypto'').randomBytes(32).toString(''base64''));\")",
+      "Bash(node -e \"const jwt = require(''jsonwebtoken''); const token = jwt.sign({ service: ''n8n'', type: ''service'' }, ''rUJv7+0OcFjmZgPEMt8LNmsNX/+i/Q69r3PReoTCtLA='', { expiresIn: ''365d'' }); console.log(token);\")",
+      "Bash(vercel login)",
+      "Bash(vercel whoami)",
+      "Bash(vercel login --github)",
+      "Bash(vercel --token bEZtFPDtRylGnmLE70jjDwav --yes --prod)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

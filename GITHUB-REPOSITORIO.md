@@ -80,10 +80,10 @@ sabrina-costa/
 │
 ├── 📄 README.md              # Readme principal
 ├── 📄 COMECE-AQUI.md         # Guia de início rápido
-├── 📄 RESUMO-EXECUTIVO.md    # Resumo para cliente
+├── 📄 STATUS-FINAL-PLANO.md  # Status consolidado
 ├── 📄 VALIDACAO-PROJETO.md   # Score 4.9/5 + checklist
 ├── 📄 PLANO-TESTES-COMPLETO.md # 82 testes definidos
-├── 📄 DEPLOY-FINAL.md        # Instruções deploy VPS
+├── 📄 DEPLOY-MANUAL-ATUALIZADO.md # Instruções de deploy atualizadas
 └── 📄 .gitignore             # Ignorar node_modules, .env, etc
 ```
 
@@ -228,7 +228,7 @@ STATUS GERAL: ✅ 95% COMPLETO - PRONTO PARA DEPLOY
 3. ⏳ **Importar workflows n8n** - 4 JSONs no fluxos.macspark.dev (20 min)
 4. ⏳ **Testes end-to-end** - Validação final (30 min)
 
-**📖 Guia completo:** `DEPLOY-FINAL.md`  
+**📖 Guia completo:** `DEPLOY-MANUAL-ATUALIZADO.md`  
 **⏱️ Tempo estimado:** 1-2 horas
 
 ---

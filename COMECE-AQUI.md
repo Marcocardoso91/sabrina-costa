@@ -81,8 +81,8 @@ sabrina-costa/                      ← PROJETO COMPLETO!
 │   └── 04-lembretes-postagem.json  ✅ Lembretes 11h/17h30
 │
 ├── 📖 README.md                    ✅ Guia completo
-├── 📊 RESUMO-EXECUTIVO.md          ✅ Overview
-├── 📈 PROGRESSO.md                 ✅ Status detalhado
+├── 📊 STATUS-FINAL-PLANO.md        ✅ Status consolidado
+├── 🚀 DEPLOY-MANUAL-ATUALIZADO.md  ✅ Guia de deploy
 └── 🎯 COMECE-AQUI.md               ✅ Este arquivo
 ```
 
@@ -197,9 +197,9 @@ npx vercel --yes
 ## 📊 RECURSOS DISPONÍVEIS
 
 ### 📚 Leia Primeiro (Recomendado)
-1. `RESUMO-EXECUTIVO.md` ← **Vista executiva completa**
-2. `README.md` ← Instruções gerais
-3. `PROGRESSO.md` ← Status detalhado
+1. `README.md` ← **Vista executiva e manual técnico**
+2. `STATUS-FINAL-PLANO.md` ← Status consolidado e próximos passos
+3. `DEPLOY-MANUAL-ATUALIZADO.md` ← Checklist definitivo de deploy
 
 ### 💻 Para Implementar
 1. `docs/API-SPEC.md` ← Guia de endpoints
@@ -403,5 +403,5 @@ cat docs/DEPLOY.md
 
 ---
 
-*Para qualquer dúvida, leia RESUMO-EXECUTIVO.md primeiro!*
+*Para qualquer dúvida, leia README.md primeiro!*
 

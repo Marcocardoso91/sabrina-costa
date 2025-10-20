@@ -39,6 +39,15 @@ Dashboard completo para gerenciar o projeto de crescimento da Sabrina Costa no I
 
 ---
 
+## 📌 Resumo Executivo
+
+- **Status:** 95% concluído — faltam apenas as ações de deploy e QA final.
+- **Entregas:** Documentação completa (PRD, Arquitetura, API, Workflows), frontend com 7 páginas, backend com endpoints autenticados, 4 workflows n8n e guias operacionais.
+- **Infra pronta:** Configurações de Supabase, Evolution API, n8n e Vercel documentadas.
+- **Próximo passo crítico:** seguir o fluxo descrito em `DEPLOY-MANUAL-ATUALIZADO.md` e executar o deploy.
+
+---
+
 ## 🚀 Tecnologias
 
 ### Frontend

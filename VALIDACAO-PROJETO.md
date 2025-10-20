@@ -316,7 +316,7 @@
 
 ### Baixos
 1. ⚠️ TestSprite indisponível (503) - Usar testes manuais
-2. ⚠️ Deploy ainda não executado - Seguir DEPLOY-FINAL.md
+2. ⚠️ Deploy ainda não executado - Seguir DEPLOY-MANUAL-ATUALIZADO.md
 
 ---
 
@@ -362,7 +362,7 @@
 ## 📋 RECOMENDAÇÕES
 
 ### Para Produção
-1. ✅ Executar `DEPLOY-FINAL.md` passo a passo
+1. ✅ Executar `DEPLOY-MANUAL-ATUALIZADO.md` passo a passo
 2. ✅ Configurar variáveis de ambiente reais
 3. ✅ Gerar JWT secrets novos (openssl)
 4. ✅ Configurar banco PostgreSQL
