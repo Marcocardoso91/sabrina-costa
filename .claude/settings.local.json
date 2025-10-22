@@ -10,7 +10,9 @@
       "Bash(vercel login)",
       "Bash(vercel whoami)",
       "Bash(vercel login --github)",
-      "Bash(vercel --token bEZtFPDtRylGnmLE70jjDwav --yes --prod)"
+      "Bash(vercel --token bEZtFPDtRylGnmLE70jjDwav --yes --prod)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

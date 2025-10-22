@@ -4,7 +4,7 @@
 const API_CONFIG = {
     baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000/api'
-        : '/api', // Proxy via vercel.json
+        : 'https://backend-smoky-theta.vercel.app/api',
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json'
