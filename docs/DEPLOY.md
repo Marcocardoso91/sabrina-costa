@@ -1,6 +1,6 @@
 # Guia de Deploy – Projeto Sabrina Costa
 
-> Última revisão: 2025-01-05  
+> Última revisão: 2025-10-23  
 > Responsável: Squad Macspark Growth Ops
 
 Este documento consolida os passos necessários para colocar o projeto em produção (frontend, backend, banco de dados e automações n8n), além de testes e checklists pós-deploy.

@@ -41,10 +41,10 @@ Dashboard completo para gerenciar o projeto de crescimento da Sabrina Costa no I
 
 ## 📌 Resumo Executivo
 
-- **Status:** 95% concluído — faltam apenas as ações de deploy e QA final.
-- **Entregas:** Documentação completa (PRD, Arquitetura, API, Workflows), frontend com 7 páginas, backend com endpoints autenticados, 4 workflows n8n e guias operacionais.
-- **Infra pronta:** Configurações de Supabase, Evolution API, n8n e Vercel documentadas.
-- **Próximo passo crítico:** seguir o fluxo descrito em `DEPLOY-MANUAL-ATUALIZADO.md` e executar o deploy.
+- **Status:** 100% do código implementado — backend deployado, aguardando configuração final.
+- **Entregas:** Documentação completa (PRD, Arquitetura, API, Workflows), frontend com 7 páginas, backend com 8 endpoints autenticados, 4 workflows n8n prontos.
+- **Infra:** Backend no ar (Vercel), banco PostgreSQL (Supabase), n8n online. Falta apenas aplicar schema e deploy do frontend.
+- **Próximo passo:** Configurar variáveis de ambiente do backend e fazer deploy do frontend (ver [GUIA-INICIO-RAPIDO.md](GUIA-INICIO-RAPIDO.md)).
 
 ---
 
@@ -543,9 +543,9 @@ Este projeto é propriedade de **Macspark** e está sob licença privada.
 
 ---
 
-**Última Atualização:** 05 de Janeiro de 2025  
+**Última Atualização:** 23 de Outubro de 2025  
 **Versão:** 1.0.0  
-**Status:** 95% Completo - Pronto para Deploy
+**Status:** Código Completo - Aguardando Deploy
 
 ---
 
