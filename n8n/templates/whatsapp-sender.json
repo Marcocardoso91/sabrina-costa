@@ -1,0 +1,102 @@
+{
+  "name": "WhatsApp Sender Template",
+  "description": "Template para envio de mensagens WhatsApp via Evolution API com retry e formatação",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "// Format WhatsApp Message\nconst message = $json.message || '';\nconst number = $json.number || $env.WHATSAPP_NUMBER;\n\n// Limpar e validar número\nconst cleanNumber = number.replace(/\\D/g, '');\n\nif (!cleanNumber || cleanNumber.length < 10) {\n  throw new Error('Número de WhatsApp inválido');\n}\n\n// Garantir que começa com código do país\nconst formattedNumber = cleanNumber.startsWith('55') ? cleanNumber : `55${cleanNumber}`;\n\nreturn [{\n  json: {\n    number: formattedNumber,\n    message,\n    options: {\n      delay: 1000,\n      presence: 'composing',\n      linkPreview: false\n    },\n    _metadata: {\n      preparedAt: new Date().toISOString(),\n      workflow: $workflow.name\n    }\n  }\n}];"
+      },
+      "name": "Format Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/{{$env.WHATSAPP_INSTANCE}}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.EVOLUTION_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$json.number}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "maxRetries": 2,
+            "waitBetweenRetries": 2000,
+            "backoffMultiplier": 2
+          },
+          "timeout": 15000
+        }
+      },
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log Result\nconst response = $json;\nconst success = !response.error && response.key;\n\nconst logEntry = {\n  timestamp: new Date().toISOString(),\n  workflow: $workflow.name,\n  level: success ? 'info' : 'error',\n  action: 'whatsapp_send',\n  success,\n  number: $node['Format Message'].json.number,\n  messageLength: $node['Format Message'].json.message.length,\n  response: success ? { messageId: response.key?.id } : { error: response.error }\n};\n\nconsole.log(JSON.stringify(logEntry));\n\nreturn [{ \n  json: { \n    ...logEntry,\n    originalMessage: $node['Format Message'].json.message\n  } \n}];"
+      },
+      "name": "Log Result",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Error Handler\nconst error = $json.error;\n\nconsole.error(JSON.stringify({\n  timestamp: new Date().toISOString(),\n  workflow: $workflow.name,\n  level: 'error',\n  action: 'whatsapp_send_failed',\n  error: error?.message || 'Unknown error',\n  number: $node['Format Message']?.json?.number\n}));\n\nreturn [{ \n  json: { \n    success: false,\n    error: error?.message,\n    retryable: true\n  } \n}];"
+      },
+      "name": "Handle Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 500],
+      "continueOnFail": true,
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Format Message": {
+      "main": [[{
+        "node": "Send WhatsApp",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "Send WhatsApp": {
+      "main": [[{
+        "node": "Log Result",
+        "type": "main",
+        "index": 0
+      }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
+

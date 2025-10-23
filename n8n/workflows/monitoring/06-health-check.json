@@ -1,0 +1,230 @@
+{
+  "name": "Sabrina_06_HealthCheck",
+  "active": false,
+  "id": "sabrina-06-health-check",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "name": "Cron - A cada 15 minutos",
+      "type": "n8n-nodes-base.schedule",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.API_BASE_URL}}/api/health",
+        "options": {
+          "timeout": 10000,
+          "retry": {
+            "maxRetries": 2,
+            "waitBetweenRetries": 1000
+          }
+        }
+      },
+      "name": "Check API Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [420, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.EVOLUTION_API_URL}}/instance/connectionState/{{$env.WHATSAPP_INSTANCE}}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.EVOLUTION_API_KEY}}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Check Evolution API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [420, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Aggregate Health Check Results\nconst apiHealth = $node['Check API Health'].json;\nconst evolutionHealth = $node['Check Evolution API'].json;\n\nconst timestamp = new Date().toISOString();\n\nconst healthStatus = {\n  timestamp,\n  overall: 'healthy',\n  services: {\n    api: {\n      status: apiHealth.error ? 'unhealthy' : 'healthy',\n      responseTime: apiHealth.responseTime || 'N/A',\n      error: apiHealth.error?.message\n    },\n    evolution: {\n      status: evolutionHealth.error ? 'unhealthy' : 'healthy',\n      connectionState: evolutionHealth.state || 'unknown',\n      error: evolutionHealth.error?.message\n    }\n  },\n  metadata: {\n    workflow: $workflow.name,\n    execution_id: $execution.id,\n    environment: $env.ENVIRONMENT\n  }\n};\n\n// Determine overall health\nif (apiHealth.error || evolutionHealth.error) {\n  healthStatus.overall = 'degraded';\n}\n\nif (apiHealth.error && evolutionHealth.error) {\n  healthStatus.overall = 'critical';\n}\n\n// Log health status\nconsole.log(JSON.stringify({\n  timestamp,\n  level: healthStatus.overall === 'healthy' ? 'info' : 'error',\n  workflow: $workflow.name,\n  message: `Health check: ${healthStatus.overall}`,\n  services: healthStatus.services\n}));\n\nreturn [{ json: healthStatus }];"
+      },
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.overall}}",
+              "operation": "notEquals",
+              "value2": "healthy"
+            }
+          ]
+        }
+      },
+      "name": "Check if Unhealthy",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format Alert Message\nconst health = $json;\nconst services = health.services;\n\nlet message = '🚨 *Health Check Alert*\\n\\n';\nmessage += `⏰ ${new Date().toLocaleString('pt-BR')}\\n`;\nmessage += `📊 Status: ${health.overall.toUpperCase()}\\n\\n`;\n\nif (services.api.status === 'unhealthy') {\n  message += `❌ *API Backend*\\n`;\n  message += `Status: ${services.api.status}\\n`;\n  if (services.api.error) {\n    message += `Erro: ${services.api.error}\\n`;\n  }\n  message += `\\n`;\n}\n\nif (services.evolution.status === 'unhealthy') {\n  message += `❌ *Evolution API*\\n`;\n  message += `Status: ${services.evolution.status}\\n`;\n  if (services.evolution.error) {\n    message += `Erro: ${services.evolution.error}\\n`;\n  }\n  message += `\\n`;\n}\n\nmessage += `🔗 Dashboard: ${$env.DASHBOARD_URL || 'N/A'}`;\n\nreturn [{\n  json: {\n    message,\n    number: $env.ADMIN_WHATSAPP,\n    health\n  }\n}];"
+      },
+      "name": "Format Alert",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1080, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/{{$env.WHATSAPP_INSTANCE}}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$env.EVOLUTION_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$json.number}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "maxRetries": 1
+          }
+        }
+      },
+      "name": "Send Alert WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1300, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log Success\nconsole.log(JSON.stringify({\n  timestamp: new Date().toISOString(),\n  workflow: $workflow.name,\n  level: 'info',\n  message: 'Health check completed - all systems healthy'\n}));\n\nreturn [{ json: { status: 'completed', healthy: true } }];"
+      },
+      "name": "Log Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1080, 400]
+    }
+  ],
+  "connections": {
+    "Cron - A cada 15 minutos": {
+      "main": [[
+        {
+          "node": "Check API Health",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Check Evolution API",
+          "type": "main",
+          "index": 0
+        }
+      ]]
+    },
+    "Check API Health": {
+      "main": [[
+        {
+          "node": "Aggregate Results",
+          "type": "main",
+          "index": 0
+        }
+      ]]
+    },
+    "Check Evolution API": {
+      "main": [[
+        {
+          "node": "Aggregate Results",
+          "type": "main",
+          "index": 0
+        }
+      ]]
+    },
+    "Aggregate Results": {
+      "main": [[
+        {
+          "node": "Check if Unhealthy",
+          "type": "main",
+          "index": 0
+        }
+      ]]
+    },
+    "Check if Unhealthy": {
+      "main": [
+        [
+          {
+            "node": "Format Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Alert": {
+      "main": [[
+        {
+          "node": "Send Alert WhatsApp",
+          "type": "main",
+          "index": 0
+        }
+      ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": "DEFAULT",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  }
+}
+

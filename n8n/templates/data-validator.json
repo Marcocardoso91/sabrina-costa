@@ -1,0 +1,104 @@
+{
+  "name": "Data Validator Template",
+  "description": "Template genérico para validação de dados com schemas configuráveis",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "// Generic Data Validator\nconst data = $json.data || $json;\nconst schema = $json.schema || {};\n\nfunction validate(data, schema) {
+  const errors = [];\n  const warnings = [];\n  \n  // Validar campos obrigatórios\n  if (schema.required && Array.isArray(schema.required)) {\n    schema.required.forEach(field => {\n      if (data[field] === undefined || data[field] === null) {\n        errors.push(`Campo obrigatório ausente: ${field}`);\n      }\n    });\n  }\n  \n  // Validar tipos\n  if (schema.properties) {\n    Object.keys(schema.properties).forEach(field => {\n      const fieldSchema = schema.properties[field];\n      const value = data[field];\n      \n      if (value === undefined || value === null) return;\n      \n      // Type validation\n      if (fieldSchema.type) {\n        const actualType = Array.isArray(value) ? 'array' : typeof value;\n        if (actualType !== fieldSchema.type) {\n          errors.push(`Campo ${field} deve ser do tipo ${fieldSchema.type}, recebido ${actualType}`);\n        }\n      }\n      \n      // Min/Max validation for numbers\n      if (fieldSchema.type === 'number') {\n        if (fieldSchema.minimum !== undefined && value < fieldSchema.minimum) {\n          errors.push(`${field} deve ser >= ${fieldSchema.minimum}`);\n        }\n        if (fieldSchema.maximum !== undefined && value > fieldSchema.maximum) {\n          errors.push(`${field} deve ser <= ${fieldSchema.maximum}`);\n        }\n      }\n      \n      // Min/Max length for strings\n      if (fieldSchema.type === 'string') {\n        if (fieldSchema.minLength && value.length < fieldSchema.minLength) {\n          errors.push(`${field} deve ter no mínimo ${fieldSchema.minLength} caracteres`);\n        }\n        if (fieldSchema.maxLength && value.length > fieldSchema.maxLength) {\n          errors.push(`${field} deve ter no máximo ${fieldSchema.maxLength} caracteres`);\n        }\n      }\n      \n      // Pattern validation\n      if (fieldSchema.pattern && fieldSchema.type === 'string') {\n        const regex = new RegExp(fieldSchema.pattern);\n        if (!regex.test(value)) {\n          errors.push(`${field} não corresponde ao padrão esperado`);\n        }\n      }\n      \n      // Enum validation\n      if (fieldSchema.enum && !fieldSchema.enum.includes(value)) {\n        errors.push(`${field} deve ser um dos valores: ${fieldSchema.enum.join(', ')}`);\n      }\n    });\n  }\n  \n  return {\n    valid: errors.length === 0,\n    errors,\n    warnings,\n    data,\n    validatedAt: new Date().toISOString()\n  };\n}\n\nconst result = validate(data, schema);\n\n// Log resultado\nconst logEntry = {\n  timestamp: new Date().toISOString(),\n  workflow: $workflow.name,\n  action: 'validation',\n  valid: result.valid,\n  errorCount: result.errors.length,\n  warningCount: result.warnings.length\n};\n\nconsole.log(JSON.stringify(logEntry));\n\nreturn [{ json: result }];"
+      },
+      "name": "Validate Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.valid}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Check Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Success Handler\nconst result = $json;\n\nconsole.log(JSON.stringify({\n  timestamp: new Date().toISOString(),\n  workflow: $workflow.name,\n  level: 'info',\n  message: 'Validação bem-sucedida',\n  dataFields: Object.keys(result.data).length\n}));\n\nreturn [{ \n  json: { \n    ...result,\n    status: 'valid'\n  } \n}];"
+      },
+      "name": "Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Error Handler\nconst result = $json;\n\nconsole.error(JSON.stringify({\n  timestamp: new Date().toISOString(),\n  workflow: $workflow.name,\n  level: 'error',\n  message: 'Validação falhou',\n  errors: result.errors,\n  warnings: result.warnings\n}));\n\n// Pode notificar admin ou parar workflow\nreturn [{ \n  json: { \n    ...result,\n    status: 'invalid'\n  } \n}];"
+      },
+      "name": "Validation Failed",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 400],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Validate Data": {
+      "main": [[{
+        "node": "Check Valid",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "Check Valid": {
+      "main": [
+        [{
+          "node": "Success",
+          "type": "main",
+          "index": 0
+        }],
+        [{
+          "node": "Validation Failed",
+          "type": "main",
+          "index": 0
+        }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "exampleSchema": {
+      "required": ["name", "email", "age"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+        },
+        "age": {
+          "type": "number",
+          "minimum": 18,
+          "maximum": 120
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "inactive", "pending"]
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,104 @@
+{
+  "name": "API Client Template",
+  "description": "Template para requisições à API com retry, error handling e logging",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "// Preparar requisição\nconst method = $json.method || 'GET';\nconst endpoint = $json.endpoint || '/api/health';\nconst body = $json.body || null;\n\nconst request = {\n  method,\n  url: `${$env.API_BASE_URL}${endpoint}`,\n  headers: {\n    'Content-Type': 'application/json',\n    'Authorization': `Bearer ${$env.API_TOKEN}`,\n    'X-Webhook-Token': $env.WEBHOOK_SECRET\n  },\n  body: body ? JSON.stringify(body) : undefined,\n  _metadata: {\n    preparedAt: new Date().toISOString(),\n    workflow: $workflow.name\n  }\n};\n\nreturn [{ json: request }];"
+      },
+      "name": "Prepare Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "={{$json.method}}",
+        "url": "={{$json.url}}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{$json.headers.Authorization}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={{$json.headers['Content-Type']}}"
+            },
+            {
+              "name": "X-Webhook-Token",
+              "value": "={{$json.headers['X-Webhook-Token']}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "options": {
+          "retry": {
+            "maxRetries": 3,
+            "retryOnHttpStatusCodes": [408, 429, 500, 502, 503, 504],
+            "waitBetweenRetries": 1000,
+            "backoffMultiplier": 2
+          },
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Handle Response\nconst response = $json;\n\nif (response.error) {\n  // Log error\n  console.error(JSON.stringify({\n    timestamp: new Date().toISOString(),\n    workflow: $workflow.name,\n    error: response.error,\n    request: $node['Prepare Request'].json\n  }));\n  \n  return [{ \n    json: { \n      success: false,\n      error: response.error,\n      _metadata: {\n        handledAt: new Date().toISOString()\n      }\n    } \n  }];\n}\n\n// Log success\nconsole.log(JSON.stringify({\n  timestamp: new Date().toISOString(),\n  workflow: $workflow.name,\n  status: 'success',\n  statusCode: response.statusCode || 200\n}));\n\nreturn [{ \n  json: { \n    success: true,\n    data: response,\n    _metadata: {\n      handledAt: new Date().toISOString()\n    }\n  } \n}];"
+      },
+      "name": "Handle Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Error Handler\nconst error = $json.error || $input.item.json.error;\n\nconst errorLog = {\n  timestamp: new Date().toISOString(),\n  workflow: $workflow.name,\n  execution_id: $execution.id,\n  level: 'error',\n  message: error?.message || 'Unknown error',\n  stack: error?.stack,\n  metadata: {\n    node: $node.name,\n    environment: $env.ENVIRONMENT\n  }\n};\n\nconsole.error(JSON.stringify(errorLog));\n\n// Notificar admin se crítico\nif ($env.ENABLE_MONITORING === 'true') {\n  return [{\n    json: {\n      notifyAdmin: true,\n      message: `🚨 Erro no workflow ${$workflow.name}\\n\\n${error?.message}`,\n      number: $env.ADMIN_WHATSAPP,\n      error: errorLog\n    }\n  }];\n}\n\nreturn [{ json: errorLog }];"
+      },
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 500],
+      "continueOnFail": true,
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Prepare Request": {
+      "main": [[{
+        "node": "HTTP Request",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "HTTP Request": {
+      "main": [[{
+        "node": "Handle Response",
+        "type": "main",
+        "index": 0
+      }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
+
