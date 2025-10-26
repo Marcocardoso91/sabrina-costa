@@ -1,0 +1,14 @@
+{
+  "name": "sabrina-costa-frontend",
+  "version": "1.0.0",
+  "description": "Frontend Dashboard Sabrina Costa",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Frontend build complete'",
+    "start": "npx serve ."
+  },
+  "keywords": ["dashboard", "instagram", "frontend"],
+  "author": "Macspark",
+  "license": "UNLICENSED",
+  "private": true
+}

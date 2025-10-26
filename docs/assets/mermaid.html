@@ -1,0 +1,525 @@
+<!-- Mermaid Diagrams Integration - Dashboard Sabrina Costa -->
+<!-- Interactive diagrams using Mermaid.js -->
+<!-- Incluir este arquivo em páginas que contêm diagramas -->
+
+<!-- Mermaid CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.css">
+
+<!-- Mermaid JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+<!-- Custom Mermaid Styles -->
+<style>
+  /* Estilos customizados para diagramas Mermaid */
+  .mermaid {
+    text-align: center;
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+  }
+  
+  .mermaid-container {
+    margin: 2rem 0;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .diagram-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: #f1f5f9;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .diagram-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    font-size: 1.125rem;
+  }
+  
+  .diagram-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .diagram-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .diagram-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+  }
+  
+  .diagram-btn.secondary {
+    background: #6b7280;
+  }
+  
+  .diagram-btn.secondary:hover {
+    background: #4b5563;
+  }
+  
+  .diagram-btn.danger {
+    background: #ef4444;
+  }
+  
+  .diagram-btn.danger:hover {
+    background: #dc2626;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .diagram-controls {
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+    
+    .diagram-actions {
+      justify-content: center;
+    }
+    
+    .mermaid {
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .mermaid {
+      background: #1f2937;
+      border-color: #374151;
+    }
+    
+    .mermaid-container {
+      background: #111827;
+      border-color: #374151;
+    }
+    
+    .diagram-controls {
+      background: #1f2937;
+      border-color: #374151;
+    }
+    
+    .diagram-title {
+      color: #f9fafb;
+    }
+  }
+</style>
+
+<!-- Mermaid Configuration -->
+<script>
+  // Configuração do Mermaid
+  const MERMAID_CONFIG = {
+    theme: 'default',
+    themeVariables: {
+      primaryColor: '#3b82f6',
+      primaryTextColor: '#1f2937',
+      primaryBorderColor: '#1e40af',
+      lineColor: '#6b7280',
+      secondaryColor: '#f3f4f6',
+      tertiaryColor: '#ffffff',
+      background: '#ffffff',
+      mainBkg: '#ffffff',
+      secondBkg: '#f9fafb',
+      tertiaryBkg: '#f3f4f6'
+    },
+    flowchart: {
+      nodeSpacing: 50,
+      rankSpacing: 50,
+      curve: 'basis'
+    },
+    sequence: {
+      diagramMarginX: 50,
+      diagramMarginY: 10,
+      actorMargin: 50,
+      width: 150,
+      height: 65,
+      boxMargin: 10,
+      boxTextMargin: 5,
+      noteMargin: 10,
+      messageMargin: 35
+    },
+    gantt: {
+      titleTopMargin: 25,
+      barHeight: 20,
+      fontFamily: 'Arial, sans-serif',
+      fontSize: 11,
+      gridLineStartPadding: 35,
+      bottomPadding: 25
+    }
+  };
+
+  // Inicializar Mermaid quando DOM estiver pronto
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se Mermaid está disponível
+    if (typeof mermaid === 'undefined') {
+      console.error('Mermaid não carregado');
+      return;
+    }
+
+    // Inicializar Mermaid
+    try {
+      mermaid.initialize(MERMAID_CONFIG);
+      console.log('Mermaid inicializado com sucesso');
+    } catch (error) {
+      console.error('Erro ao inicializar Mermaid:', error);
+    }
+  });
+</script>
+
+<!-- Diagram Management Functions -->
+<script>
+  // Funções para gerenciar diagramas
+  window.diagramManager = {
+    // Renderizar diagrama
+    renderDiagram: function(id, definition, title = '') {
+      const container = document.getElementById('mermaid-container') || this.createContainer();
+      
+      const diagramDiv = document.createElement('div');
+      diagramDiv.id = `diagram-${id}`;
+      diagramDiv.className = 'mermaid';
+      diagramDiv.setAttribute('data-diagram-id', id);
+      
+      if (title) {
+        const controlsDiv = document.createElement('div');
+        controlsDiv.className = 'diagram-controls';
+        controlsDiv.innerHTML = `
+          <h3 class="diagram-title">${title}</h3>
+          <div class="diagram-actions">
+            <button class="diagram-btn" onclick="diagramManager.editDiagram('${id}')">
+              ✏️ Editar
+            </button>
+            <button class="diagram-btn secondary" onclick="diagramManager.downloadDiagram('${id}')">
+              📥 Download
+            </button>
+            <button class="diagram-btn danger" onclick="diagramManager.deleteDiagram('${id}')">
+              🗑️ Remover
+            </button>
+          </div>
+        `;
+        container.appendChild(controlsDiv);
+      }
+      
+      diagramDiv.textContent = definition;
+      container.appendChild(diagramDiv);
+      
+      // Renderizar com Mermaid
+      if (window.mermaid) {
+        mermaid.init(undefined, diagramDiv);
+      }
+    },
+
+    // Criar container
+    createContainer: function() {
+      const container = document.createElement('div');
+      container.id = 'mermaid-container';
+      container.className = 'mermaid-container';
+      document.body.appendChild(container);
+      return container;
+    },
+
+    // Editar diagrama
+    editDiagram: function(id) {
+      const diagramElement = document.querySelector(`[data-diagram-id="${id}"]`);
+      if (!diagramElement) return;
+      
+      const currentDefinition = diagramElement.textContent;
+      const newDefinition = prompt('Editar diagrama:', currentDefinition);
+      
+      if (newDefinition && newDefinition !== currentDefinition) {
+        diagramElement.textContent = newDefinition;
+        if (window.mermaid) {
+          mermaid.init(undefined, diagramElement);
+        }
+      }
+    },
+
+    // Download diagrama
+    downloadDiagram: function(id) {
+      const diagramElement = document.querySelector(`[data-diagram-id="${id}"]`);
+      if (!diagramElement) return;
+      
+      // Criar canvas para captura
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Configurar canvas
+      canvas.width = diagramElement.offsetWidth;
+      canvas.height = diagramElement.offsetHeight;
+      
+      // Desenhar fundo
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Desenhar texto do diagrama
+      ctx.fillStyle = '#1e293b';
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Diagrama Mermaid', canvas.width / 2, canvas.height / 2);
+      
+      // Download
+      const link = document.createElement('a');
+      link.download = `diagram-${id}-${Date.now()}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    },
+
+    // Deletar diagrama
+    deleteDiagram: function(id) {
+      if (confirm('Tem certeza que deseja remover este diagrama?')) {
+        const diagramElement = document.querySelector(`[data-diagram-id="${id}"]`);
+        const controlsElement = diagramElement.previousElementSibling;
+        
+        if (diagramElement) diagramElement.remove();
+        if (controlsElement && controlsElement.classList.contains('diagram-controls')) {
+          controlsElement.remove();
+        }
+      }
+    }
+  };
+</script>
+
+<!-- Auto-render Mermaid diagrams -->
+<script>
+  // Auto-render diagramas Mermaid existentes
+  document.addEventListener('DOMContentLoaded', function() {
+    // Encontrar todos os elementos com classe mermaid
+    const mermaidElements = document.querySelectorAll('.mermaid');
+    
+    mermaidElements.forEach((element, index) => {
+      // Adicionar ID único se não tiver
+      if (!element.id) {
+        element.id = `mermaid-auto-${index}`;
+      }
+      
+      // Adicionar atributo para tracking
+      element.setAttribute('data-diagram-id', element.id);
+      
+      // Track diagram view
+      if (window.analytics) {
+        window.analytics.trackEvent('diagram_view', {
+          diagram_id: element.id,
+          category: 'Diagrams'
+        });
+      }
+    });
+    
+    // Renderizar todos os diagramas
+    if (window.mermaid) {
+      mermaid.init(undefined, mermaidElements);
+    }
+  });
+</script>
+
+<!-- Diagram Analytics -->
+<script>
+  // Track diagram interactions
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.mermaid')) {
+      const diagramElement = e.target.closest('.mermaid');
+      const diagramId = diagramElement.dataset.diagramId;
+      
+      if (window.analytics) {
+        window.analytics.trackEvent('diagram_interaction', {
+          diagram_id: diagramId,
+          interaction_type: 'click',
+          category: 'Diagrams'
+        });
+      }
+    }
+    
+    // Track diagram button clicks
+    if (e.target.classList.contains('diagram-btn')) {
+      const action = e.target.textContent.trim();
+      const diagramId = e.target.closest('.diagram-controls').nextElementSibling?.dataset.diagramId;
+      
+      if (window.analytics) {
+        window.analytics.trackEvent('diagram_action', {
+          action: action,
+          diagram_id: diagramId,
+          category: 'Diagrams'
+        });
+      }
+    }
+  });
+</script>
+
+<!-- Diagram Examples -->
+<script>
+  // Exemplos de diagramas para demonstração
+  window.diagramExamples = {
+    // Exemplo de arquitetura
+    architecture: `
+      graph TB
+          A[Frontend] -->|HTTPS| B[Backend API]
+          B -->|PostgreSQL| C[Database]
+          B -->|HTTP| D[n8n Workflows]
+          D -->|WhatsApp| E[Evolution API]
+          E -->|Messages| F[Users]
+    `,
+    
+    // Exemplo de fluxo de dados
+    dataFlow: `
+      sequenceDiagram
+          participant U as User
+          participant F as Frontend
+          participant B as Backend
+          participant D as Database
+          
+          U->>F: Login Request
+          F->>B: POST /auth/login
+          B->>D: Verify Credentials
+          D-->>B: User Data
+          B-->>F: JWT Token
+          F-->>U: Dashboard Access
+    `,
+    
+    // Exemplo de processo
+    process: `
+      graph LR
+          A[Start] --> B[Process Data]
+          B --> C{Success?}
+          C -->|Yes| D[Save Results]
+          C -->|No| E[Handle Error]
+          D --> F[End]
+          E --> F
+    `
+  };
+  
+  // Função para adicionar exemplos
+  window.addDiagramExample = function(type) {
+    const definition = window.diagramExamples[type];
+    if (definition) {
+      window.diagramManager.renderDiagram(
+        `example-${type}-${Date.now()}`,
+        definition,
+        `Exemplo: ${type.charAt(0).toUpperCase() + type.slice(1)}`
+      );
+    }
+  };
+</script>
+
+<!-- Diagram Editor -->
+<script>
+  // Editor de diagramas inline
+  window.createDiagramEditor = function(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const editor = document.createElement('div');
+    editor.innerHTML = `
+      <div class="diagram-editor">
+        <h3>📝 Editor de Diagramas</h3>
+        <textarea id="diagram-editor-text" rows="10" cols="80" placeholder="Digite sua definição Mermaid aqui..."></textarea>
+        <div class="diagram-editor-actions">
+          <button onclick="previewDiagram()" class="diagram-btn">👁️ Preview</button>
+          <button onclick="renderDiagram()" class="diagram-btn">🎨 Renderizar</button>
+          <button onclick="clearEditor()" class="diagram-btn secondary">🗑️ Limpar</button>
+        </div>
+        <div id="diagram-preview" class="mermaid"></div>
+      </div>
+    `;
+    
+    container.appendChild(editor);
+  };
+  
+  // Funções do editor
+  window.previewDiagram = function() {
+    const text = document.getElementById('diagram-editor-text').value;
+    const preview = document.getElementById('diagram-preview');
+    
+    if (text.trim()) {
+      preview.textContent = text;
+      if (window.mermaid) {
+        mermaid.init(undefined, preview);
+      }
+    }
+  };
+  
+  window.renderDiagram = function() {
+    const text = document.getElementById('diagram-editor-text').value;
+    if (text.trim()) {
+      window.diagramManager.renderDiagram(
+        `editor-${Date.now()}`,
+        text,
+        'Diagrama do Editor'
+      );
+    }
+  };
+  
+  window.clearEditor = function() {
+    document.getElementById('diagram-editor-text').value = '';
+    document.getElementById('diagram-preview').innerHTML = '';
+  };
+</script>
+
+<!-- Diagram Styles -->
+<style>
+  .diagram-editor {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .diagram-editor h3 {
+    margin: 0 0 1rem 0;
+    color: #1e293b;
+  }
+  
+  .diagram-editor textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    resize: vertical;
+    margin-bottom: 1rem;
+  }
+  
+  .diagram-editor-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  #diagram-preview {
+    min-height: 200px;
+    border: 2px dashed #d1d5db;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+  }
+  
+  #diagram-preview:not(:empty) {
+    border: 1px solid #e2e8f0;
+    background: white;
+  }
+</style>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Navegação - Dashboard Sabrina Costa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/navigation.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Breadcrumbs -->
+    <div id="breadcrumbs" class="breadcrumbs"></div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <article class="prose prose-lg max-w-none">
+                    <h1 id="introducao">Sistema de Navegação Avançado</h1>
+                    <p>Este é um exemplo de como o sistema de navegação funciona na documentação do Dashboard Sabrina Costa.</p>
+
+                    <h2 id="breadcrumbs-section">Breadcrumbs</h2>
+                    <p>Os breadcrumbs mostram a localização atual na documentação, facilitando a navegação hierárquica.</p>
+
+                    <h2 id="toc-section">Table of Contents (TOC)</h2>
+                    <p>A tabela de conteúdos é gerada automaticamente a partir dos cabeçalhos da página e oferece navegação rápida.</p>
+
+                    <h3 id="toc-features">Funcionalidades do TOC</h3>
+                    <ul>
+                        <li>Geração automática a partir dos cabeçalhos</li>
+                        <li>Comportamento sticky (grudado) em telas maiores</li>
+                        <li>Destaque da seção ativa durante o scroll</li>
+                        <li>Navegação suave entre seções</li>
+                        <li>Suporte a teclado (ESC para fechar)</li>
+                    </ul>
+
+                    <h2 id="prev-next-section">Navegação Anterior/Próxima</h2>
+                    <p>Links para navegar entre páginas relacionadas, melhorando o fluxo de leitura.</p>
+
+                    <h2 id="back-to-top-section">Botão Voltar ao Topo</h2>
+                    <p>Botão flutuante que aparece após rolar a página, permitindo retornar rapidamente ao início.</p>
+
+                    <h2 id="responsive-section">Design Responsivo</h2>
+                    <p>O sistema se adapta a diferentes tamanhos de tela, otimizando a experiência em dispositivos móveis.</p>
+
+                    <h3 id="mobile-optimizations">Otimizações Mobile</h3>
+                    <ul>
+                        <li>TOC não fica sticky em telas pequenas</li>
+                        <li>Breadcrumbs se reorganizam verticalmente</li>
+                        <li>Botões de navegação se ajustam ao espaço disponível</li>
+                    </ul>
+
+                    <h2 id="accessibility-section">Acessibilidade</h2>
+                    <p>O sistema inclui várias funcionalidades de acessibilidade para garantir que todos os usuários possam navegar eficientemente.</p>
+
+                    <h3 id="keyboard-navigation">Navegação por Teclado</h3>
+                    <ul>
+                        <li>Suporte completo a navegação por teclado</li>
+                        <li>Indicadores visuais de foco</li>
+                        <li>Atalhos de teclado para funcionalidades principais</li>
+                    </ul>
+
+                    <h2 id="dark-mode-section">Modo Escuro</h2>
+                    <p>Suporte automático ao modo escuro baseado nas preferências do sistema.</p>
+
+                    <h2 id="performance-section">Performance</h2>
+                    <p>O sistema foi otimizado para performance, com debounce no scroll e lazy loading quando necessário.</p>
+
+                    <h3 id="optimization-techniques">Técnicas de Otimização</h3>
+                    <ul>
+                        <li>Debounce no evento de scroll</li>
+                        <li>Throttling de eventos de redimensionamento</li>
+                        <li>Lazy loading de componentes pesados</li>
+                        <li>CSS otimizado para animações suaves</li>
+                    </ul>
+
+                    <h2 id="customization-section">Personalização</h2>
+                    <p>O sistema pode ser facilmente personalizado através de CSS e JavaScript.</p>
+
+                    <h3 id="css-variables">Variáveis CSS</h3>
+                    <p>Use variáveis CSS para personalizar cores, espaçamentos e outros aspectos visuais.</p>
+
+                    <h2 id="integration-section">Integração</h2>
+                    <p>Fácil integração em qualquer página HTML através de CSS e JavaScript.</p>
+
+                    <h3 id="setup-steps">Passos de Configuração</h3>
+                    <ol>
+                        <li>Incluir o CSS de navegação</li>
+                        <li>Incluir o JavaScript de navegação</li>
+                        <li>Adicionar containers HTML necessários</li>
+                        <li>Configurar dados de navegação (opcional)</li>
+                    </ol>
+
+                    <h2 id="conclusion-section">Conclusão</h2>
+                    <p>Este sistema de navegação oferece uma experiência completa e profissional para a documentação do Dashboard Sabrina Costa.</p>
+                </article>
+            </div>
+
+            <!-- Sidebar with TOC -->
+            <div class="lg:col-span-1">
+                <div id="toc"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Previous/Next Navigation -->
+    <div id="prev-next-nav" class="prev-next-nav"></div>
+
+    <!-- Scripts -->
+    <script src="assets/js/navigation.js"></script>
+</body>
+</html>

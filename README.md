@@ -475,7 +475,7 @@ npx serve
 
 ## 📚 Documentação Adicional
 
-- [PRD (Product Requirements)](docs/PRD.md)
+- [PRD (Product Requirements)](docs/reference/product/PRD.md)
 - [Arquitetura do Sistema](docs/ARQUITETURA.md)
 - [API Specification](docs/API-SPEC.md)
 - [n8n Workflows](docs/N8N-WORKFLOWS.md)

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Analytics Dashboard - Documentação Sabrina Costa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">📊 Analytics Dashboard</h1>
+                    <p class="text-sm text-gray-600">Métricas da documentação - Dashboard Sabrina Costa</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Última atualização: <span id="lastUpdate"></span></span>
+                    <button onclick="refreshData()" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                        🔄 Atualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- KPIs Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Page Views -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span class="text-blue-600">👁️</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Page Views</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="totalPageViews">-</p>
+                        <p class="text-sm text-green-600" id="pageViewsChange">+0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unique Visitors -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <span class="text-green-600">👥</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Visitantes Únicos</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="uniqueVisitors">-</p>
+                        <p class="text-sm text-green-600" id="visitorsChange">+0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average Session Time -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <span class="text-yellow-600">⏱️</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Tempo Médio</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="avgSessionTime">-</p>
+                        <p class="text-sm text-green-600" id="sessionTimeChange">+0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bounce Rate -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                            <span class="text-red-600">📈</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Taxa de Rejeição</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="bounceRate">-</p>
+                        <p class="text-sm text-red-600" id="bounceRateChange">+0%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Page Views Over Time -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">📈 Page Views ao Longo do Tempo</h3>
+                <canvas id="pageViewsChart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- Top Pages -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">🔥 Páginas Mais Visitadas</h3>
+                <div id="topPages" class="space-y-3">
+                    <!-- Top pages will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Engagement Metrics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Search Queries -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">🔍 Queries de Busca</h3>
+                <div id="searchQueries" class="space-y-2">
+                    <!-- Search queries will be populated here -->
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">💬 Feedback</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-green-600" id="positiveFeedback">-</p>
+                        <p class="text-sm text-gray-500">👍 Positivo</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-red-600" id="negativeFeedback">-</p>
+                        <p class="text-sm text-gray-500">👎 Negativo</p>
+                    </div>
+                </div>
+                <div id="feedbackComments" class="space-y-2">
+                    <!-- Feedback comments will be populated here -->
+                </div>
+            </div>
+
+            <!-- Device Types -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">📱 Tipos de Dispositivo</h3>
+                <canvas id="deviceChart" width="300" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Tutorial Analytics -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">📚 Analytics dos Tutoriais</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <p class="text-2xl font-bold text-blue-600" id="tutorialStarts">-</p>
+                    <p class="text-sm text-gray-600">Inícios de Tutorial</p>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <p class="text-2xl font-bold text-green-600" id="tutorialCompletions">-</p>
+                    <p class="text-sm text-gray-600">Completados</p>
+                </div>
+                <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                    <p class="text-2xl font-bold text-yellow-600" id="avgTutorialTime">-</p>
+                    <p class="text-sm text-gray-600">Tempo Médio</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <p class="text-2xl font-bold text-purple-600" id="tutorialDropoff">-</p>
+                    <p class="text-sm text-gray-600">Taxa de Abandono</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Playground Analytics -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">🔧 API Playground Analytics</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center p-4 bg-indigo-50 rounded-lg">
+                    <p class="text-2xl font-bold text-indigo-600" id="apiInteractions">-</p>
+                    <p class="text-sm text-gray-600">Interações</p>
+                </div>
+                <div class="text-center p-4 bg-pink-50 rounded-lg">
+                    <p class="text-2xl font-bold text-pink-600" id="apiTryOuts">-</p>
+                    <p class="text-sm text-gray-600">"Try it out"</p>
+                </div>
+                <div class="text-center p-4 bg-teal-50 rounded-lg">
+                    <p class="text-2xl font-bold text-teal-600" id="apiSuccessRate">-</p>
+                    <p class="text-sm text-gray-600">Taxa de Sucesso</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">⚡ Métricas de Performance</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-2xl font-bold text-gray-700" id="avgLoadTime">-</p>
+                    <p class="text-sm text-gray-600">Tempo de Carregamento</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-2xl font-bold text-gray-700" id="errorRate">-</p>
+                    <p class="text-sm text-gray-600">Taxa de Erro</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-2xl font-bold text-gray-700" id="scrollDepth">-</p>
+                    <p class="text-sm text-gray-600">Profundidade de Scroll</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-2xl font-bold text-gray-700" id="readingTime">-</p>
+                    <p class="text-sm text-gray-600">Tempo de Leitura</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        // Mock data - In production, this would come from your analytics API
+        const mockData = {
+            totalPageViews: 12547,
+            uniqueVisitors: 3241,
+            avgSessionTime: '4m 32s',
+            bounceRate: '23.4%',
+            pageViewsChange: '+12.5%',
+            visitorsChange: '+8.3%',
+            sessionTimeChange: '+15.2%',
+            bounceRateChange: '-5.1%',
+            topPages: [
+                { name: 'Quick Start', views: 2341, change: '+15%' },
+                { name: 'API Reference', views: 1892, change: '+8%' },
+                { name: 'Deploy Guide', views: 1654, change: '+22%' },
+                { name: 'Troubleshooting', views: 1432, change: '+5%' },
+                { name: 'Architecture', views: 1208, change: '+18%' }
+            ],
+            searchQueries: [
+                { query: 'como fazer deploy', count: 45 },
+                { query: 'erro CORS', count: 32 },
+                { query: 'configurar n8n', count: 28 },
+                { query: 'autenticação JWT', count: 24 },
+                { query: 'WhatsApp integration', count: 19 }
+            ],
+            positiveFeedback: 89,
+            negativeFeedback: 11,
+            feedbackComments: [
+                { text: 'Muito útil, consegui configurar tudo!', rating: 'positive' },
+                { text: 'Faltou exemplo com Python', rating: 'negative' },
+                { text: 'Excelente documentação', rating: 'positive' }
+            ],
+            deviceTypes: {
+                desktop: 65,
+                mobile: 28,
+                tablet: 7
+            },
+            tutorialStats: {
+                starts: 456,
+                completions: 234,
+                avgTime: '12m 45s',
+                dropoff: '48.7%'
+            },
+            apiStats: {
+                interactions: 1234,
+                tryOuts: 567,
+                successRate: '94.2%'
+            },
+            performance: {
+                avgLoadTime: '1.2s',
+                errorRate: '0.8%',
+                scrollDepth: '78%',
+                readingTime: '3m 45s'
+            }
+        };
+
+        // Initialize dashboard
+        function initDashboard() {
+            updateKPIs();
+            updateTopPages();
+            updateSearchQueries();
+            updateFeedback();
+            updateTutorialStats();
+            updateAPIStats();
+            updatePerformance();
+            updateCharts();
+            updateLastUpdate();
+        }
+
+        // Update KPI cards
+        function updateKPIs() {
+            document.getElementById('totalPageViews').textContent = mockData.totalPageViews.toLocaleString();
+            document.getElementById('uniqueVisitors').textContent = mockData.uniqueVisitors.toLocaleString();
+            document.getElementById('avgSessionTime').textContent = mockData.avgSessionTime;
+            document.getElementById('bounceRate').textContent = mockData.bounceRate;
+            
+            document.getElementById('pageViewsChange').textContent = mockData.pageViewsChange;
+            document.getElementById('visitorsChange').textContent = mockData.visitorsChange;
+            document.getElementById('sessionTimeChange').textContent = mockData.sessionTimeChange;
+            document.getElementById('bounceRateChange').textContent = mockData.bounceRateChange;
+        }
+
+        // Update top pages
+        function updateTopPages() {
+            const container = document.getElementById('topPages');
+            container.innerHTML = mockData.topPages.map(page => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium text-gray-900">${page.name}</p>
+                        <p class="text-sm text-gray-500">${page.views.toLocaleString()} visualizações</p>
+                    </div>
+                    <span class="text-sm font-medium text-green-600">${page.change}</span>
+                </div>
+            `).join('');
+        }
+
+        // Update search queries
+        function updateSearchQueries() {
+            const container = document.getElementById('searchQueries');
+            container.innerHTML = mockData.searchQueries.map(query => `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <span class="text-sm text-gray-700">"${query.query}"</span>
+                    <span class="text-sm font-medium text-blue-600">${query.count}</span>
+                </div>
+            `).join('');
+        }
+
+        // Update feedback
+        function updateFeedback() {
+            document.getElementById('positiveFeedback').textContent = mockData.positiveFeedback;
+            document.getElementById('negativeFeedback').textContent = mockData.negativeFeedback;
+            
+            const container = document.getElementById('feedbackComments');
+            container.innerHTML = mockData.feedbackComments.map(comment => `
+                <div class="p-2 bg-gray-50 rounded text-sm">
+                    <p class="text-gray-700">${comment.text}</p>
+                    <span class="text-xs ${comment.rating === 'positive' ? 'text-green-600' : 'text-red-600'}">
+                        ${comment.rating === 'positive' ? '👍' : '👎'} ${comment.rating}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Update tutorial stats
+        function updateTutorialStats() {
+            document.getElementById('tutorialStarts').textContent = mockData.tutorialStats.starts;
+            document.getElementById('tutorialCompletions').textContent = mockData.tutorialStats.completions;
+            document.getElementById('avgTutorialTime').textContent = mockData.tutorialStats.avgTime;
+            document.getElementById('tutorialDropoff').textContent = mockData.tutorialStats.dropoff;
+        }
+
+        // Update API stats
+        function updateAPIStats() {
+            document.getElementById('apiInteractions').textContent = mockData.apiStats.interactions;
+            document.getElementById('apiTryOuts').textContent = mockData.apiStats.tryOuts;
+            document.getElementById('apiSuccessRate').textContent = mockData.apiStats.successRate;
+        }
+
+        // Update performance
+        function updatePerformance() {
+            document.getElementById('avgLoadTime').textContent = mockData.performance.avgLoadTime;
+            document.getElementById('errorRate').textContent = mockData.performance.errorRate;
+            document.getElementById('scrollDepth').textContent = mockData.performance.scrollDepth;
+            document.getElementById('readingTime').textContent = mockData.performance.readingTime;
+        }
+
+        // Update charts
+        function updateCharts() {
+            // Page views chart
+            const pageViewsCtx = document.getElementById('pageViewsChart').getContext('2d');
+            new Chart(pageViewsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                    datasets: [{
+                        label: 'Page Views',
+                        data: [1200, 1900, 3000, 5000, 2000, 3000],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Device types chart
+            const deviceCtx = document.getElementById('deviceChart').getContext('2d');
+            new Chart(deviceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Desktop', 'Mobile', 'Tablet'],
+                    datasets: [{
+                        data: [mockData.deviceTypes.desktop, mockData.deviceTypes.mobile, mockData.deviceTypes.tablet],
+                        backgroundColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)',
+                            'rgb(245, 158, 11)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update last update time
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleString('pt-BR');
+        }
+
+        // Refresh data
+        function refreshData() {
+            // Simulate data refresh
+            console.log('Refreshing data...');
+            setTimeout(() => {
+                updateLastUpdate();
+                console.log('Data refreshed!');
+            }, 1000);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

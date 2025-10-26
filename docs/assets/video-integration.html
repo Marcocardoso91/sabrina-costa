@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integração de Vídeos - Dashboard Sabrina Costa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .video-container iframe,
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .gif-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .gif-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .video-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .video-card h3 {
+            margin: 0 0 1rem 0;
+            color: #1e293b;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .video-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .video-duration {
+            background: #3b82f6;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .video-description {
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .video-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .video-thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-placeholder {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .video-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .video-stats span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        @media (max-width: 768px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .video-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-8">🎬 Integração de Vídeos na Documentação</h1>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-blue-800 mb-4">📋 Vídeos de Demonstração</h2>
+            <p class="text-blue-700">
+                Esta página demonstra como integrar vídeos e GIFs na documentação do projeto. 
+                Os vídeos são organizados por categoria e incluem metadados para melhor navegação.
+            </p>
+        </div>
+
+        <!-- GIFs de Demonstração -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🎞️ GIFs de Demonstração</h2>
+            
+            <div class="video-grid">
+                <!-- GIF 1: Login -->
+                <div class="video-card">
+                    <h3>🔐 Como fazer login no dashboard</h3>
+                    <div class="video-meta">
+                        <span>GIF • 30s</span>
+                        <span class="video-duration">30s</span>
+                    </div>
+                    <div class="gif-container">
+                        <img src="/assets/videos/gifs/01-login-dashboard.gif" 
+                             alt="Demonstração de login no dashboard"
+                             class="loading-placeholder"
+                             style="height: 200px; width: 100%;">
+                    </div>
+                    <div class="video-description">
+                        Demonstração completa do processo de login, desde a página inicial até o acesso ao dashboard principal.
+                    </div>
+                    <div class="video-actions">
+                        <a href="#" class="btn btn-primary">▶️ Assistir</a>
+                        <a href="/assets/videos/gifs/01-login-dashboard.gif" class="btn btn-secondary" download>📥 Download</a>
+                    </div>
+                </div>
+
+                <!-- GIF 2: Visualizar Métricas -->
+                <div class="video-card">
+                    <h3>📊 Como visualizar métricas</h3>
+                    <div class="video-meta">
+                        <span>GIF • 45s</span>
+                        <span class="video-duration">45s</span>
+                    </div>
+                    <div class="gif-container">
+                        <img src="/assets/videos/gifs/02-visualizar-metricas.gif" 
+                             alt="Demonstração de visualização de métricas"
+                             class="loading-placeholder"
+                             style="height: 200px; width: 100%;">
+                    </div>
+                    <div class="video-description">
+                        Guia passo a passo para navegar pela seção de métricas, aplicar filtros e visualizar gráficos.
+                    </div>
+                    <div class="video-actions">
+                        <a href="#" class="btn btn-primary">▶️ Assistir</a>
+                        <a href="/assets/videos/gifs/02-visualizar-metricas.gif" class="btn btn-secondary" download>📥 Download</a>
+                    </div>
+                </div>
+
+                <!-- GIF 3: Adicionar Métrica -->
+                <div class="video-card">
+                    <h3>➕ Como adicionar métrica manualmente</h3>
+                    <div class="video-meta">
+                        <span>GIF • 60s</span>
+                        <span class="video-duration">60s</span>
+                    </div>
+                    <div class="gif-container">
+                        <img src="/assets/videos/gifs/03-adicionar-metrica.gif" 
+                             alt="Demonstração de adição de métrica"
+                             class="loading-placeholder"
+                             style="height: 200px; width: 100%;">
+                    </div>
+                    <div class="video-description">
+                        Tutorial completo para adicionar uma nova métrica manualmente, incluindo todos os campos necessários.
+                    </div>
+                    <div class="video-actions">
+                        <a href="#" class="btn btn-primary">▶️ Assistir</a>
+                        <a href="/assets/videos/gifs/03-adicionar-metrica.gif" class="btn btn-secondary" download>📥 Download</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vídeos Tutoriais -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🎥 Vídeos Tutoriais</h2>
+            
+            <div class="video-grid">
+                <!-- Vídeo 1: Configurar Alertas -->
+                <div class="video-card">
+                    <img src="/assets/videos/thumbnails/04-configurar-alertas.jpg" 
+                         alt="Thumbnail: Configurar Alertas"
+                         class="video-thumbnail loading-placeholder">
+                    <h3>🚨 Como configurar alertas</h3>
+                    <div class="video-meta">
+                        <span>Vídeo • 3min</span>
+                        <span class="video-duration">3:00</span>
+                    </div>
+                    <div class="video-description">
+                        Configuração completa do sistema de alertas, incluindo thresholds, mensagens personalizadas e integração com WhatsApp.
+                    </div>
+                    <div class="video-actions">
+                        <a href="#" class="btn btn-primary">▶️ Assistir no Loom</a>
+                        <a href="#" class="btn btn-secondary">📋 Ver Script</a>
+                    </div>
+                    <div class="video-stats">
+                        <span>👀 1.2k visualizações</span>
+                        <span>👍 95% útil</span>
+                    </div>
+                </div>
+
+                <!-- Vídeo 2: Importar Workflow n8n -->
+                <div class="video-card">
+                    <img src="/assets/videos/thumbnails/05-importar-workflow-n8n.jpg" 
+                         alt="Thumbnail: Importar Workflow n8n"
+                         class="video-thumbnail loading-placeholder">
+                    <h3>🤖 Como importar workflow n8n</h3>
+                    <div class="video-meta">
+                        <span>Vídeo • 5min</span>
+                        <span class="video-duration">5:00</span>
+                    </div>
+                    <div class="video-description">
+                        Tutorial completo para importar e configurar os 4 workflows n8n principais do sistema.
+                    </div>
+                    <div class="video-actions">
+                        <a href="#" class="btn btn-primary">▶️ Assistir no Loom</a>
+                        <a href="#" class="btn btn-secondary">📋 Ver Script</a>
+                    </div>
+                    <div class="video-stats">
+                        <span>👀 856 visualizações</span>
+                        <span>👍 92% útil</span>
+                    </div>
+                </div>
+
+                <!-- Vídeo 3: Deploy Frontend -->
+                <div class="video-card">
+                    <img src="/assets/videos/thumbnails/06-deploy-frontend.jpg" 
+                         alt="Thumbnail: Deploy Frontend"
+                         class="video-thumbnail loading-placeholder">
+                    <h3>🚀 Como fazer deploy frontend</h3>
+                    <div class="video-meta">
+                        <span>Vídeo • 4min</span>
+                        <span class="video-duration">4:00</span>
+                    </div>
+                    <div class="video-description">
+                        Deploy completo do frontend no Vercel, incluindo configuração de domínio e variáveis de ambiente.
+                    </div>
+                    <div class="video-actions">
+                        <a href="#" class="btn btn-primary">▶️ Assistir no Loom</a>
+                        <a href="#" class="btn btn-secondary">📋 Ver Script</a>
+                    </div>
+                    <div class="video-stats">
+                        <span>👀 1.5k visualizações</span>
+                        <span>👍 98% útil</span>
+                    </div>
+                </div>
+
+                <!-- Vídeo 4: Deploy Backend -->
+                <div class="video-card">
+                    <img src="/assets/videos/thumbnails/07-deploy-backend.jpg" 
+                         alt="Thumbnail: Deploy Backend"
+                         class="video-thumbnail loading-placeholder">
+                    <h3>⚙️ Como fazer deploy backend</h3>
+                    <div class="video-meta">
+                        <span>Vídeo • 5min</span>
+                        <span class="video-duration">5:00</span>
+                    </div>
+                    <div class="video-description">
+                        Deploy do backend usando Vercel Functions, configuração de variáveis de ambiente e testes de endpoints.
+                    </div>
+                    <div class="video-actions">
+                        <a href="#" class="btn btn-primary">▶️ Assistir no Loom</a>
+                        <a href="#" class="btn btn-secondary">📋 Ver Script</a>
+                    </div>
+                    <div class="video-stats">
+                        <span>👀 1.1k visualizações</span>
+                        <span>👍 94% útil</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Player de Vídeo Integrado -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🎬 Player Integrado</h2>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4">📺 Demonstração: Configurar Alertas</h3>
+                
+                <!-- Loom Embed -->
+                <div class="video-container">
+                    <iframe src="https://www.loom.com/embed/example-video-id" 
+                            frameborder="0" 
+                            allowfullscreen
+                            title="Como configurar alertas - Dashboard Sabrina Costa">
+                    </iframe>
+                </div>
+                
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-sm text-gray-600">
+                        <span>📅 Publicado em 23/10/2025</span>
+                        <span>•</span>
+                        <span>👀 1.2k visualizações</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn-secondary">👍 Útil</button>
+                        <button class="btn btn-secondary">👎 Não útil</button>
+                        <button class="btn btn-secondary">📤 Compartilhar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Código de Integração -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">💻 Código de Integração</h2>
+            
+            <div class="bg-gray-900 rounded-lg p-6 text-white">
+                <h3 class="text-lg font-semibold mb-4 text-green-400">HTML para Integrar Vídeos</h3>
+                <pre class="text-sm overflow-x-auto"><code>&lt;!-- GIF de Demonstração --&gt;
+&lt;div class="gif-demo"&gt;
+  &lt;h3&gt;🔐 Como fazer login no dashboard&lt;/h3&gt;
+  &lt;img src="/assets/videos/gifs/01-login-dashboard.gif" 
+       alt="Demonstração de login"
+       style="max-width: 100%; height: auto;"&gt;
+  &lt;p&gt;Demonstração completa do processo de login.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;!-- Vídeo Loom --&gt;
+&lt;div class="video-demo"&gt;
+  &lt;h3&gt;🚨 Como configurar alertas&lt;/h3&gt;
+  &lt;div class="video-container"&gt;
+    &lt;iframe src="https://www.loom.com/embed/video-id" 
+            frameborder="0" 
+            allowfullscreen&gt;&lt;/iframe&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+            
+            <div class="bg-gray-900 rounded-lg p-6 text-white mt-4">
+                <h3 class="text-lg font-semibold mb-4 text-blue-400">CSS para Estilização</h3>
+                <pre class="text-sm overflow-x-auto"><code>.video-container {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 */
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.gif-demo {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.gif-demo img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- Métricas de Performance -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 Métricas de Performance</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-lg p-6 shadow">
+                    <h3 class="text-lg font-semibold text-green-600 mb-2">✅ Taxa de Conclusão</h3>
+                    <p class="text-3xl font-bold text-green-600">87%</p>
+                    <p class="text-sm text-gray-600">Usuários que assistem até o final</p>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow">
+                    <h3 class="text-lg font-semibold text-blue-600 mb-2">⏱️ Tempo Médio</h3>
+                    <p class="text-3xl font-bold text-blue-600">4:23</p>
+                    <p class="text-sm text-gray-600">Tempo médio de visualização</p>
+                </div>
+                
+                <div class="bg-white rounded-lg p-6 shadow">
+                    <h3 class="text-lg font-semibold text-purple-600 mb-2">👍 Satisfação</h3>
+                    <p class="text-3xl font-bold text-purple-600">94%</p>
+                    <p class="text-sm text-gray-600">Feedback positivo</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Próximos Passos -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🚀 Próximos Passos</h2>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-4">📋 Checklist de Produção</h3>
+                <ul class="space-y-2 text-yellow-700">
+                    <li>☐ Gravar todos os 7 vídeos/GIFs</li>
+                    <li>☐ Criar thumbnails para vídeos</li>
+                    <li>☐ Otimizar arquivos para web</li>
+                    <li>☐ Upload para CDN/Loom</li>
+                    <li>☐ Integrar na documentação</li>
+                    <li>☐ Testar em diferentes dispositivos</li>
+                    <li>☐ Configurar analytics</li>
+                    <li>☐ Documentar processo</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <!-- Analytics Script -->
+    <script>
+        // Track video interactions
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-primary')) {
+                const videoTitle = e.target.closest('.video-card').querySelector('h3').textContent;
+                
+                if (window.analytics) {
+                    window.analytics.trackEvent('video_play', {
+                        video_title: videoTitle,
+                        category: 'Tutorials'
+                    });
+                }
+            }
+        });
+        
+        // Track video downloads
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-secondary') && e.target.textContent.includes('Download')) {
+                const videoTitle = e.target.closest('.video-card').querySelector('h3').textContent;
+                
+                if (window.analytics) {
+                    window.analytics.trackEvent('video_download', {
+                        video_title: videoTitle,
+                        category: 'Tutorials'
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

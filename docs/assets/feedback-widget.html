@@ -1,0 +1,462 @@
+<!-- Feedback Widget Integration - Dashboard Sabrina Costa -->
+<!-- Widget "Was this helpful?" para coleta de feedback dos usuários -->
+<!-- Incluir este arquivo em todas as páginas da documentação -->
+
+<!-- Feedback Widget CSS -->
+<style>
+  /* Estilos customizados para o widget de feedback */
+  .feedback-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: slideIn 0.3s ease-out;
+  }
+  
+  .feedback-container {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    max-width: 300px;
+    transition: all 0.3s ease;
+  }
+  
+  .feedback-question p {
+    margin: 0 0 1rem 0;
+    color: #1f2937;
+    font-weight: 500;
+  }
+  
+  .feedback-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  
+  .feedback-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .feedback-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+  }
+  
+  .feedback-btn.feedback-no {
+    background: #6b7280;
+  }
+  
+  .feedback-btn.feedback-no:hover {
+    background: #4b5563;
+  }
+  
+  .feedback-btn.feedback-submit {
+    background: #10b981;
+  }
+  
+  .feedback-btn.feedback-submit:hover {
+    background: #059669;
+  }
+  
+  .feedback-btn.feedback-cancel {
+    background: #6b7280;
+  }
+  
+  .feedback-btn.feedback-cancel:hover {
+    background: #4b5563;
+  }
+  
+  .feedback-form textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 0.75rem;
+    background: #ffffff;
+    color: #1f2937;
+  }
+  
+  .feedback-form textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .feedback-form-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+  
+  .feedback-thanks {
+    text-align: center;
+    color: #10b981;
+    font-weight: 500;
+  }
+  
+  .feedback-thanks p {
+    margin: 0;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .feedback-widget {
+      bottom: 10px;
+      right: 10px;
+    }
+    
+    .feedback-container {
+      max-width: 280px;
+      padding: 0.75rem;
+    }
+    
+    .feedback-buttons {
+      flex-direction: column;
+    }
+    
+    .feedback-btn {
+      justify-content: center;
+    }
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .feedback-container {
+      background: #1f2937;
+      border-color: #374151;
+    }
+    
+    .feedback-question p {
+      color: #f9fafb;
+    }
+    
+    .feedback-form textarea {
+      background: #1f2937;
+      border-color: #374151;
+      color: #f9fafb;
+    }
+  }
+  
+  /* Animation */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<!-- Feedback Widget JavaScript -->
+<script src="/assets/js/feedback-widget.js"></script>
+
+<!-- Configuração do Widget -->
+<script>
+  // Configuração personalizada do widget
+  const feedbackConfig = {
+    // Posição do widget
+    position: 'bottom-right', // bottom-right, bottom-left, top-right, top-left
+    
+    // Tema
+    theme: 'light', // light, dark, auto
+    
+    // Idioma
+    language: 'pt-BR',
+    
+    // Analytics
+    trackEvents: true,
+    analyticsProvider: 'ga4', // ga4, hotjar, custom
+    
+    // Armazenamento
+    storageType: 'localStorage', // localStorage, sessionStorage, cookie
+    rememberFeedback: true,
+    
+    // API (opcional)
+    apiEndpoint: null, // URL para enviar feedback para backend
+    apiKey: null,
+    
+    // Notificações
+    showNotifications: true,
+    notificationDuration: 3000,
+    
+    // Mensagens personalizadas
+    customMessages: {
+      helpful: 'Esta página foi útil?',
+      yes: '👍 Sim',
+      no: '👎 Não',
+      thanks: '✅ Obrigado pelo feedback!',
+      improve: 'O que podemos melhorar?',
+      submit: 'Enviar',
+      cancel: 'Cancelar',
+      placeholder: 'Digite sua sugestão aqui...'
+    }
+  };
+
+  // Inicializar widget com configuração personalizada
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se deve mostrar o widget
+    const shouldShow = !document.querySelector('.no-feedback-widget');
+    
+    if (shouldShow) {
+      // Inicializar widget
+      window.feedbackWidget = new FeedbackWidget(feedbackConfig);
+      
+      // Mostrar widget após delay
+      setTimeout(() => {
+        window.feedbackWidget.show();
+      }, 3000); // 3 segundos após carregar a página
+    }
+  });
+</script>
+
+<!-- Analytics Integration -->
+<script>
+  // Track feedback events
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.feedback-widget')) {
+      const feedbackType = e.target.dataset.feedback;
+      const action = e.target.textContent.trim();
+      
+      // Google Analytics 4
+      if (window.gtag) {
+        window.gtag('event', 'feedback_interaction', {
+          event_category: 'Feedback Widget',
+          event_label: window.location.pathname,
+          feedback_type: feedbackType,
+          action: action
+        });
+      }
+      
+      // Hotjar
+      if (window.hj) {
+        window.hj('event', 'feedback_interaction');
+      }
+      
+      // Custom analytics
+      if (window.analytics) {
+        window.analytics.trackEvent('feedback_interaction', {
+          feedback_type: feedbackType,
+          action: action,
+          page: window.location.pathname
+        });
+      }
+    }
+  });
+</script>
+
+<!-- Feedback Dashboard (opcional) -->
+<script>
+  // Função para mostrar dashboard de feedback (apenas para admins)
+  window.showFeedbackDashboard = function() {
+    const feedbackData = window.getFeedbackData();
+    
+    if (Object.keys(feedbackData).length === 0) {
+      alert('Nenhum feedback coletado ainda.');
+      return;
+    }
+    
+    // Criar modal com dados de feedback
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    
+    modal.innerHTML = `
+      <div style="
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      ">
+        <h2 style="margin: 0 0 1rem 0; color: #1f2937;">📊 Dashboard de Feedback</h2>
+        <div id="feedback-stats"></div>
+        <button onclick="this.closest('.modal').remove()" style="
+          background: #6b7280;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          padding: 0.5rem 1rem;
+          cursor: pointer;
+          margin-top: 1rem;
+        ">Fechar</button>
+      </div>
+    `;
+    
+    modal.className = 'modal';
+    document.body.appendChild(modal);
+    
+    // Mostrar estatísticas
+    const statsContainer = modal.querySelector('#feedback-stats');
+    const stats = calculateFeedbackStats(feedbackData);
+    
+    statsContainer.innerHTML = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+        <div style="text-align: center; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+          <div style="font-size: 2rem; font-weight: bold; color: #3b82f6;">${stats.total}</div>
+          <div style="color: #6b7280;">Total de Feedback</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+          <div style="font-size: 2rem; font-weight: bold; color: #10b981;">${stats.positive}%</div>
+          <div style="color: #6b7280;">Positivo</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+          <div style="font-size: 2rem; font-weight: bold; color: #ef4444;">${stats.negative}%</div>
+          <div style="color: #6b7280;">Negativo</div>
+        </div>
+      </div>
+      
+      <div style="max-height: 300px; overflow-y: auto;">
+        <h3 style="margin: 0 0 1rem 0; color: #1f2937;">📝 Feedback Detalhado</h3>
+        ${Object.entries(feedbackData).map(([page, data]) => `
+          <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <div style="font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">${page}</div>
+            <div style="color: #6b7280; font-size: 0.875rem; margin-bottom: 0.5rem;">
+              ${data.type === 'yes' ? '👍 Positivo' : '👎 Negativo'} • 
+              ${new Date(data.timestamp).toLocaleString('pt-BR')}
+            </div>
+            ${data.feedback ? `<div style="color: #4b5563; font-style: italic;">"${data.feedback}"</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+    
+    // Fechar modal ao clicar fora
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  };
+  
+  // Função para calcular estatísticas
+  function calculateFeedbackStats(feedbackData) {
+    const entries = Object.values(feedbackData);
+    const total = entries.length;
+    const positive = entries.filter(e => e.type === 'yes').length;
+    const negative = entries.filter(e => e.type === 'no').length;
+    
+    return {
+      total,
+      positive: total > 0 ? Math.round((positive / total) * 100) : 0,
+      negative: total > 0 ? Math.round((negative / total) * 100) : 0
+    };
+  }
+</script>
+
+<!-- Feedback Export (opcional) -->
+<script>
+  // Função para exportar feedback como CSV
+  window.exportFeedbackCSV = function() {
+    const feedbackData = window.getFeedbackData();
+    
+    if (Object.keys(feedbackData).length === 0) {
+      alert('Nenhum feedback para exportar.');
+      return;
+    }
+    
+    // Converter para CSV
+    const csvContent = [
+      'Página,Tipo,Feedback,Data',
+      ...Object.entries(feedbackData).map(([page, data]) => 
+        `"${page}","${data.type}","${data.feedback || ''}","${data.timestamp}"`
+      )
+    ].join('\n');
+    
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `feedback-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+</script>
+
+<!-- Feedback Widget Controls -->
+<script>
+  // Controles programáticos do widget
+  window.feedbackControls = {
+    // Mostrar widget
+    show: function() {
+      if (window.feedbackWidget) {
+        window.feedbackWidget.show();
+      }
+    },
+    
+    // Esconder widget
+    hide: function() {
+      if (window.feedbackWidget) {
+        window.feedbackWidget.hide();
+      }
+    },
+    
+    // Resetar feedback
+    reset: function() {
+      if (window.feedbackWidget) {
+        window.feedbackWidget.reset();
+        alert('Feedback resetado com sucesso!');
+      }
+    },
+    
+    // Obter dados
+    getData: function() {
+      return window.getFeedbackData();
+    },
+    
+    // Mostrar dashboard
+    dashboard: function() {
+      window.showFeedbackDashboard();
+    },
+    
+    // Exportar CSV
+    export: function() {
+      window.exportFeedbackCSV();
+    }
+  };
+  
+  // Adicionar controles ao console (apenas em desenvolvimento)
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('🎯 Controles do Feedback Widget disponíveis:');
+    console.log('- feedbackControls.show() - Mostrar widget');
+    console.log('- feedbackControls.hide() - Esconder widget');
+    console.log('- feedbackControls.reset() - Resetar feedback');
+    console.log('- feedbackControls.getData() - Obter dados');
+    console.log('- feedbackControls.dashboard() - Mostrar dashboard');
+    console.log('- feedbackControls.export() - Exportar CSV');
+  }
+</script>

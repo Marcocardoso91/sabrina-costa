@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Dashboard Sabrina Costa - Documentação</title>
+    <description>Documentação completa do Dashboard Sabrina Costa, incluindo tutoriais, guias práticos, referências e explicações.</description>
+    <link>https://sabrina-costa.vercel.app/docs/</link>
+    <atom:link href="https://sabrina-costa.vercel.app/feeds/rss.xml" rel="self" type="application/rss+xml"/>
+    <image>
+      <url>https://sabrina-costa.vercel.app/assets/images/logo.png</url>
+      <title>Dashboard Sabrina Costa - Documentação</title>
+      <link>https://sabrina-costa.vercel.app/docs/</link>
+    </image>
+    <language>pt-BR</language>
+    <managingEditor>Sabrina Costa</managingEditor>
+    <webMaster>Sabrina Costa</webMaster>
+    <copyright>2025 Sabrina Costa</copyright>
+    <lastBuildDate>Wed, 23 Oct 2025 18:00:00 GMT</lastBuildDate>
+    <ttl>60</ttl>
+    <category>documentação</category>
+    <category>tutorial</category>
+    <category>dashboard</category>
+    <category>dashboard</category>
+    
+    <item>
+      <title>Guia de Início Rápido</title>
+      <description>Aprenda a configurar e usar o Dashboard Sabrina Costa em poucos minutos.</description>
+      <link>https://sabrina-costa.vercel.app/docs/tutorials/01-quickstart.md</link>
+      <guid>quickstart</guid>
+      <category>início</category>
+      <category>configuração</category>
+      <category>básico</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Guia completo para começar a usar o sistema...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Primeiro Deploy</title>
+      <description>Guia completo para fazer o primeiro deploy do projeto na Vercel.</description>
+      <link>https://sabrina-costa.vercel.app/docs/tutorials/02-primeiro-deploy.md</link>
+      <guid>deploy</guid>
+      <category>deploy</category>
+      <category>vercel</category>
+      <category>produção</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Passo a passo para fazer deploy na Vercel...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Primeiro Workflow n8n</title>
+      <description>Configure seu primeiro workflow de automação com n8n.</description>
+      <link>https://sabrina-costa.vercel.app/docs/tutorials/03-primeiro-workflow-n8n.md</link>
+      <guid>n8n-workflow</guid>
+      <category>n8n</category>
+      <category>automação</category>
+      <category>workflow</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Como configurar workflows no n8n...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Conectar WhatsApp</title>
+      <description>Integre o WhatsApp com o sistema usando Evolution API.</description>
+      <link>https://sabrina-costa.vercel.app/docs/tutorials/04-conectar-whatsapp.md</link>
+      <guid>whatsapp</guid>
+      <category>whatsapp</category>
+      <category>evolution-api</category>
+      <category>integração</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Integração com WhatsApp via Evolution API...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Configurar Autenticação JWT</title>
+      <description>Guia prático para configurar autenticação JWT no backend.</description>
+      <link>https://sabrina-costa.vercel.app/docs/how-to-guides/autenticacao/setup-jwt.md</link>
+      <guid>jwt-auth</guid>
+      <category>autenticação</category>
+      <category>jwt</category>
+      <category>segurança</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Configuração de autenticação JWT...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Arquitetura do Sistema</title>
+      <description>Visão completa da arquitetura do Dashboard Sabrina Costa.</description>
+      <link>https://sabrina-costa.vercel.app/docs/explanation/architecture.md</link>
+      <guid>architecture</guid>
+      <category>arquitetura</category>
+      <category>sistema</category>
+      <category>tecnologia</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Arquitetura completa do sistema...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Referência da API</title>
+      <description>Documentação completa de todos os endpoints da API.</description>
+      <link>https://sabrina-costa.vercel.app/docs/reference/api/README.md</link>
+      <guid>api-reference</guid>
+      <category>api</category>
+      <category>endpoints</category>
+      <category>referência</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Referência completa da API...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Gerenciar Métricas</title>
+      <description>Como adicionar, visualizar e analisar métricas do Instagram.</description>
+      <link>https://sabrina-costa.vercel.app/docs/how-to-guides/metrics/view-metrics.md</link>
+      <guid>metrics</guid>
+      <category>métricas</category>
+      <category>instagram</category>
+      <category>análise</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Gerenciamento de métricas do Instagram...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Configurar Alertas</title>
+      <description>Configure alertas automáticos para métricas importantes.</description>
+      <link>https://sabrina-costa.vercel.app/docs/how-to-guides/alerts/setup-alerts.md</link>
+      <guid>alerts</guid>
+      <category>alertas</category>
+      <category>notificações</category>
+      <category>automação</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Configuração de alertas automáticos...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+    
+    <item>
+      <title>Solução de Problemas</title>
+      <description>Guia para resolver problemas comuns do sistema.</description>
+      <link>https://sabrina-costa.vercel.app/docs/how-to-guides/troubleshooting/common-issues.md</link>
+      <guid>troubleshooting</guid>
+      <category>problemas</category>
+      <category>solução</category>
+      <category>debug</category>
+      <author>Sabrina Costa</author>
+      <pubDate>Wed, 23 Oct 2025 18:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[Solução de problemas comuns...]]></content:encoded>
+      <dc:creator>Sabrina Costa</dc:creator>
+      <dc:date>2025-10-23T18:00:00.000Z</dc:date>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,409 @@
+<!-- Algolia DocSearch Integration - Dashboard Sabrina Costa -->
+<!-- Full-text search implementation -->
+<!-- Incluir este arquivo em todas as páginas de documentação -->
+
+<!-- DocSearch CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3/dist/style.css">
+
+<!-- DocSearch JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3/dist/umd/index.js"></script>
+
+<!-- Custom DocSearch Configuration -->
+<script>
+  // Configuração do DocSearch
+  const DOCSEARCH_CONFIG = {
+    appId: 'YOUR_ALGOLIA_APP_ID', // Substituir pelo ID real
+    apiKey: 'YOUR_ALGOLIA_API_KEY', // Substituir pela chave real
+    indexName: 'sabrina-costa-docs',
+    placeholder: 'Buscar na documentação...',
+    searchParameters: {
+      hitsPerPage: 10,
+      attributesToRetrieve: ['title', 'content', 'url', 'hierarchy'],
+      attributesToHighlight: ['title', 'content'],
+      highlightPreTag: '<mark class="search-highlight">',
+      highlightPostTag: '</mark>'
+    },
+    debug: false
+  };
+
+  // Inicializar DocSearch quando DOM estiver pronto
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se DocSearch está disponível
+    if (typeof docsearch === 'undefined') {
+      console.error('DocSearch não carregado');
+      return;
+    }
+
+    // Inicializar DocSearch
+    try {
+      docsearch({
+        container: '#docsearch',
+        appId: DOCSEARCH_CONFIG.appId,
+        apiKey: DOCSEARCH_CONFIG.apiKey,
+        indexName: DOCSEARCH_CONFIG.indexName,
+        placeholder: DOCSEARCH_CONFIG.placeholder,
+        searchParameters: DOCSEARCH_CONFIG.searchParameters,
+        debug: DOCSEARCH_CONFIG.debug,
+        transformItems: function(items) {
+          // Transformar resultados para adicionar categorias e ícones
+          return items.map(function(item) {
+            // Determinar categoria baseada na URL
+            let category = 'Documentação';
+            let icon = '📄';
+            
+            if (item.url.includes('/tutorials/')) {
+              category = 'Tutoriais';
+              icon = '📚';
+            } else if (item.url.includes('/how-to-guides/')) {
+              category = 'Guias';
+              icon = '🛠️';
+            } else if (item.url.includes('/reference/')) {
+              category = 'Referência';
+              icon = '📋';
+            } else if (item.url.includes('/explanation/')) {
+              category = 'Explicações';
+              icon = '💡';
+            }
+
+            // Adicionar categoria e ícone ao item
+            return {
+              ...item,
+              category: category,
+              icon: icon
+            };
+          });
+        },
+        getMissingResultsUrl: function({ query }) {
+          return 'https://github.com/Marcocardoso91/sabrina-costa/issues/new?title=Missing+results+for+query+%22' + encodeURIComponent(query) + '%22';
+        }
+      });
+
+      console.log('DocSearch inicializado com sucesso');
+    } catch (error) {
+      console.error('Erro ao inicializar DocSearch:', error);
+    }
+  });
+</script>
+
+<!-- Custom Search Styles -->
+<style>
+  /* Estilos customizados para DocSearch */
+  .DocSearch-Button {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  .DocSearch-Button:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .DocSearch-Button-Key {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    color: #6b7280;
+    margin-left: 8px;
+  }
+  
+  .search-highlight {
+    background: #fef3c7;
+    padding: 1px 2px;
+    border-radius: 2px;
+    font-weight: 500;
+  }
+  
+  .DocSearch-Modal {
+    z-index: 9999;
+  }
+  
+  .DocSearch-Hit {
+    border-bottom: 1px solid #f3f4f6;
+    padding: 12px 16px;
+  }
+  
+  .DocSearch-Hit-source {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 16px;
+    margin: 0;
+  }
+  
+  .DocSearch-Hit-title {
+    color: #1e293b;
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  
+  .DocSearch-Hit-content {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  .DocSearch-Hit[aria-selected="true"] {
+    background: #dbeafe;
+  }
+  
+  .DocSearch-Hit a {
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .DocSearch-Hit a:hover {
+    text-decoration: none;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .DocSearch-Button {
+      height: 36px;
+      font-size: 14px;
+    }
+    
+    .DocSearch-Modal {
+      margin: 0;
+      border-radius: 0;
+    }
+    
+    .DocSearch-Hit {
+      padding: 10px 12px;
+    }
+    
+    .DocSearch-Hit-title {
+      font-size: 14px;
+    }
+    
+    .DocSearch-Hit-content {
+      font-size: 13px;
+    }
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .DocSearch-Button {
+      background: #1f2937;
+      border-color: #374151;
+      color: #f9fafb;
+    }
+    
+    .DocSearch-Button:hover {
+      border-color: #3b82f6;
+      background: #111827;
+    }
+    
+    .DocSearch-Button-Key {
+      background: #374151;
+      border-color: #4b5563;
+      color: #d1d5db;
+    }
+  }
+</style>
+
+<!-- Search Analytics -->
+<script>
+  // Track search events
+  document.addEventListener('DOMContentLoaded', function() {
+    // Track search box focus
+    const searchContainer = document.getElementById('docsearch');
+    if (searchContainer) {
+      searchContainer.addEventListener('click', function() {
+        if (window.analytics) {
+          window.analytics.trackEvent('search_focus', {
+            category: 'Search',
+            page: window.location.pathname
+          });
+        }
+      });
+    }
+    
+    // Track search queries (when user types)
+    document.addEventListener('keydown', function(e) {
+      if (e.target.closest('.DocSearch-Input')) {
+        if (e.key === 'Enter') {
+          const query = e.target.value;
+          if (window.analytics) {
+            window.analytics.trackSearch(query, 0);
+          }
+        }
+      }
+    });
+    
+    // Track result clicks
+    document.addEventListener('click', function(e) {
+      const hit = e.target.closest('.DocSearch-Hit');
+      if (hit) {
+        const title = hit.querySelector('.DocSearch-Hit-title')?.textContent;
+        const url = hit.querySelector('a')?.href;
+        const category = hit.querySelector('.DocSearch-Hit-source')?.textContent;
+        
+        if (window.analytics) {
+          window.analytics.trackEvent('search_result_click', {
+            title: title,
+            url: url,
+            category: category,
+            page: window.location.pathname
+          });
+        }
+      }
+    });
+  });
+</script>
+
+<!-- Search Suggestions -->
+<script>
+  // Popular search suggestions
+  const searchSuggestions = [
+    'como fazer deploy',
+    'configurar n8n',
+    'autenticação JWT',
+    'erro CORS',
+    'WhatsApp integration',
+    'API endpoints',
+    'troubleshooting',
+    'arquitetura do sistema',
+    'configuração banco de dados',
+    'workflows n8n',
+    'Evolution API',
+    'Vercel deploy',
+    'Supabase setup',
+    'rate limiting',
+    'webhook n8n'
+  ];
+
+  // Show suggestions when search is focused
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('.DocSearch-Input');
+    if (searchInput) {
+      searchInput.addEventListener('focus', function() {
+        // Show suggestions overlay (simplified)
+        console.log('Sugestões de busca:', searchSuggestions.slice(0, 5).join(', '));
+      });
+    }
+  });
+</script>
+
+<!-- Search Performance Monitoring -->
+<script>
+  // Monitor search performance
+  document.addEventListener('DOMContentLoaded', function() {
+    let searchStartTime = 0;
+    
+    // Track search start
+    document.addEventListener('keydown', function(e) {
+      if (e.target.closest('.DocSearch-Input')) {
+        if (e.key === 'Enter') {
+          searchStartTime = performance.now();
+        }
+      }
+    });
+    
+    // Track search results
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.DocSearch-Hit')) {
+        const searchTime = performance.now() - searchStartTime;
+        
+        if (window.analytics) {
+          window.analytics.trackEvent('search_performance', {
+            search_time: Math.round(searchTime),
+            page: window.location.pathname,
+            category: 'Performance'
+          });
+        }
+      }
+    });
+  });
+</script>
+
+<!-- Search Error Handling -->
+<script>
+  // Handle search errors gracefully
+  document.addEventListener('DOMContentLoaded', function() {
+    // Override DocSearch error handling
+    const originalDocSearch = window.docsearch;
+    if (originalDocSearch) {
+      window.docsearch = function(config) {
+        try {
+          return originalDocSearch(config);
+        } catch (error) {
+          console.error('DocSearch error:', error);
+          
+          // Show fallback search
+          const container = document.getElementById('docsearch');
+          if (container) {
+            container.innerHTML = `
+              <div class="search-fallback">
+                <input type="text" placeholder="Buscar na documentação..." 
+                       class="search-input" id="fallback-search">
+                <button class="search-button" onclick="performFallbackSearch()">
+                  🔍
+                </button>
+              </div>
+            `;
+          }
+          
+          return null;
+        }
+      };
+    }
+  });
+  
+  // Fallback search function
+  function performFallbackSearch() {
+    const query = document.getElementById('fallback-search').value;
+    if (query) {
+      // Redirect to GitHub search
+      window.open(`https://github.com/Marcocardoso91/sabrina-costa/search?q=${encodeURIComponent(query)}&type=code`, '_blank');
+    }
+  }
+</script>
+
+<!-- Search Fallback Styles -->
+<style>
+  .search-fallback {
+    display: flex;
+    width: 100%;
+    height: 40px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    overflow: hidden;
+  }
+  
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+  
+  .search-button {
+    background: #3b82f6;
+    border: none;
+    color: white;
+    padding: 0 12px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .search-button:hover {
+    background: #2563eb;
+  }
+</style>

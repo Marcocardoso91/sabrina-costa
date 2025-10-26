@@ -1,9 +1,12 @@
 {
   "version": 2,
+  "buildCommand": "echo 'Frontend build complete'",
+  "outputDirectory": ".",
+  "installCommand": "echo 'No install needed'",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://sabrina-costa-backend.vercel.app/api/$1"
+      "destination": "https://backend-9kg2bodp7-marcocardoso28s-projects.vercel.app/api/$1"
     }
   ],
   "redirects": [

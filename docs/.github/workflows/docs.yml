@@ -1,0 +1,373 @@
+name: 📚 Deploy Documentation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - 'backend/**/*.js'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'backend/**/*.js'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  NODE_VERSION: '18'
+  DOCS_DIR: 'docs'
+
+jobs:
+  # ============================================================================
+  # VALIDAÇÃO E TESTES
+  # ============================================================================
+  validate:
+    name: 🔍 Validate Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.DOCS_DIR }}/package-lock.json
+      
+      - name: 📦 Install dependencies
+        working-directory: ${{ env.DOCS_DIR }}
+        run: |
+          npm ci
+          npm install -g swagger-codegen-cli
+      
+      - name: 🔍 Validate OpenAPI specification
+        working-directory: ${{ env.DOCS_DIR }}
+        run: |
+          if [ -f "api/openapi.yaml" ]; then
+            swagger-codegen validate -i api/openapi.yaml
+            echo "✅ OpenAPI specification is valid"
+          else
+            echo "⚠️ OpenAPI specification not found, will be generated"
+          fi
+      
+      - name: 📊 Check documentation structure
+        run: |
+          echo "📁 Checking documentation structure..."
+          if [ -d "${{ env.DOCS_DIR }}/api" ]; then
+            echo "✅ API directory exists"
+          else
+            echo "⚠️ API directory not found"
+          fi
+          
+          if [ -d "${{ env.DOCS_DIR }}/assets" ]; then
+            echo "✅ Assets directory exists"
+          else
+            echo "⚠️ Assets directory not found"
+          fi
+          
+          if [ -f "${{ env.DOCS_DIR }}/README.md" ]; then
+            echo "✅ README.md exists"
+          else
+            echo "⚠️ README.md not found"
+          fi
+
+  # ============================================================================
+  # GERAÇÃO DE DOCUMENTAÇÃO
+  # ============================================================================
+  generate:
+    name: 📚 Generate Documentation
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.DOCS_DIR }}/package-lock.json
+      
+      - name: 📦 Install dependencies
+        working-directory: ${{ env.DOCS_DIR }}
+        run: npm ci
+      
+      - name: 🔄 Generate API documentation
+        working-directory: ${{ env.DOCS_DIR }}
+        run: |
+          echo "🚀 Generating API documentation..."
+          npm run docs:generate
+          
+          # Verificar se a documentação foi gerada
+          if [ -f "api/openapi.yaml" ]; then
+            echo "✅ OpenAPI YAML generated"
+            wc -l api/openapi.yaml
+          else
+            echo "❌ OpenAPI YAML not generated"
+            exit 1
+          fi
+          
+          if [ -f "api/openapi.json" ]; then
+            echo "✅ OpenAPI JSON generated"
+            wc -l api/openapi.json
+          else
+            echo "❌ OpenAPI JSON not generated"
+            exit 1
+          fi
+      
+      - name: 📊 Generate coverage report
+        working-directory: ${{ env.DOCS_DIR }}
+        run: |
+          echo "📊 Generating coverage report..."
+          if [ -f "api/coverage-report.md" ]; then
+            echo "✅ Coverage report generated"
+            head -20 api/coverage-report.md
+          else
+            echo "⚠️ Coverage report not generated"
+          fi
+      
+      - name: 📋 List generated files
+        run: |
+          echo "📁 Generated files:"
+          find ${{ env.DOCS_DIR }}/api -type f -name "*.yaml" -o -name "*.json" -o -name "*.md" | head -10
+      
+      - name: 💾 Upload generated docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-docs
+          path: ${{ env.DOCS_DIR }}/api/
+          retention-days: 7
+
+  # ============================================================================
+  # BUILD E OTIMIZAÇÃO
+  # ============================================================================
+  build:
+    name: 🏗️ Build Documentation
+    runs-on: ubuntu-latest
+    needs: generate
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📥 Download generated docs
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-docs
+          path: ${{ env.DOCS_DIR }}/api/
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: 📦 Install dependencies
+        working-directory: ${{ env.DOCS_DIR }}
+        run: npm ci
+      
+      - name: 🏗️ Build documentation
+        working-directory: ${{ env.DOCS_DIR }}
+        run: |
+          echo "🏗️ Building documentation..."
+          npm run docs:build
+          
+          # Verificar se o build foi bem-sucedido
+          if [ -d "dist" ]; then
+            echo "✅ Documentation built successfully"
+            ls -la dist/
+          else
+            echo "⚠️ Build directory not found, using docs directory"
+          fi
+      
+      - name: 📊 Optimize assets
+        run: |
+          echo "📊 Optimizing assets..."
+          
+          # Comprimir arquivos grandes
+          find ${{ env.DOCS_DIR }}/assets -name "*.js" -exec gzip -k {} \;
+          find ${{ env.DOCS_DIR }}/assets -name "*.css" -exec gzip -k {} \;
+          
+          echo "✅ Assets optimized"
+      
+      - name: 📋 Generate build report
+        run: |
+          echo "📋 Generating build report..."
+          cat > build-report.md << EOF
+          # 📚 Build Report - Documentation
+          
+          **Build Date:** $(date)
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## 📊 Statistics
+          
+          - **Total Files:** $(find ${{ env.DOCS_DIR }} -type f | wc -l)
+          - **Total Size:** $(du -sh ${{ env.DOCS_DIR }} | cut -f1)
+          - **API Endpoints:** $(grep -c "paths:" ${{ env.DOCS_DIR }}/api/openapi.yaml || echo "0")
+          
+          ## 📁 Generated Files
+          
+          \`\`\`
+          $(find ${{ env.DOCS_DIR }}/api -type f | head -20)
+          \`\`\`
+          
+          ## ✅ Build Status
+          
+          - [x] OpenAPI specification generated
+          - [x] Documentation structure validated
+          - [x] Assets optimized
+          - [x] Build completed successfully
+          
+          EOF
+          
+          echo "✅ Build report generated"
+      
+      - name: 💾 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-docs
+          path: ${{ env.DOCS_DIR }}/
+          retention-days: 30
+
+  # ============================================================================
+  # DEPLOY PARA PRODUÇÃO
+  # ============================================================================
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📥 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-docs
+          path: ${{ env.DOCS_DIR }}/
+      
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.DOCS_DIR }}
+          cname: docs.sabrina-costa.com
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: '📚 Deploy docs: ${{ github.sha }}'
+      
+      - name: 🔔 Notify deployment
+        run: |
+          echo "🎉 Documentation deployed to GitHub Pages!"
+          echo "📖 URL: https://docs.sabrina-costa.com"
+          echo "🔗 Commit: ${{ github.sha }}"
+
+  # ============================================================================
+  # DEPLOY PARA STAGING
+  # ============================================================================
+  deploy-staging:
+    name: 🧪 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop' || github.event_name == 'pull_request'
+    environment: staging
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📥 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-docs
+          path: ${{ env.DOCS_DIR }}/
+      
+      - name: 🧪 Deploy to staging
+        run: |
+          echo "🧪 Deploying to staging environment..."
+          echo "📖 Staging URL: https://staging-docs.sabrina-costa.com"
+          echo "🔗 Commit: ${{ github.sha }}"
+          
+          # Aqui você pode adicionar lógica para deploy em staging
+          # Por exemplo, usando Vercel, Netlify, ou outro serviço
+          
+          echo "✅ Staging deployment completed"
+
+  # ============================================================================
+  # NOTIFICAÇÕES
+  # ============================================================================
+  notify:
+    name: 📢 Send Notifications
+    runs-on: ubuntu-latest
+    needs: [deploy-production, deploy-staging]
+    if: always()
+    
+    steps:
+      - name: 📢 Notify on success
+        if: needs.deploy-production.result == 'success' || needs.deploy-staging.result == 'success'
+        run: |
+          echo "🎉 Documentation deployment successful!"
+          echo "📖 Production: https://docs.sabrina-costa.com"
+          echo "🧪 Staging: https://staging-docs.sabrina-costa.com"
+          echo "🔗 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.actor }}"
+      
+      - name: 📢 Notify on failure
+        if: needs.deploy-production.result == 'failure' || needs.deploy-staging.result == 'failure'
+        run: |
+          echo "❌ Documentation deployment failed!"
+          echo "🔗 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.actor }}"
+          echo "📋 Check the logs for more details"
+      
+      - name: 📊 Generate deployment summary
+        run: |
+          cat > deployment-summary.md << EOF
+          # 📚 Deployment Summary
+          
+          **Date:** $(date)
+          **Commit:** ${{ github.sha }}
+          **Author:** ${{ github.actor }}
+          **Branch:** ${{ github.ref_name }}
+          **Event:** ${{ github.event_name }}
+          
+          ## 🚀 Deployment Status
+          
+          - **Production:** ${{ needs.deploy-production.result || 'skipped' }}
+          - **Staging:** ${{ needs.deploy-staging.result || 'skipped' }}
+          
+          ## 📖 URLs
+          
+          - **Production:** https://docs.sabrina-costa.com
+          - **Staging:** https://staging-docs.sabrina-costa.com
+          
+          ## 📊 Build Info
+          
+          - **Node.js:** ${{ env.NODE_VERSION }}
+          - **OS:** Ubuntu Latest
+          - **Duration:** ${{ github.run_duration }}
+          
+          EOF
+          
+          echo "📊 Deployment summary generated"

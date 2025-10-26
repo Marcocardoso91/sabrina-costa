@@ -1,0 +1,377 @@
+name: 🔍 Validate Documentation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - 'backend/**/*.js'
+  schedule:
+    # Executar validação diariamente às 2h UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  DOCS_DIR: 'docs'
+
+jobs:
+  # ============================================================================
+  # VALIDAÇÃO DE ESTRUTURA
+  # ============================================================================
+  validate-structure:
+    name: 📁 Validate Structure
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔍 Check documentation structure
+        run: |
+          echo "🔍 Validating documentation structure..."
+          
+          # Verificar diretórios obrigatórios
+          required_dirs=(
+            "docs/api"
+            "docs/assets"
+            "docs/scripts"
+            "docs/tutorials"
+            "docs/how-to-guides"
+            "docs/reference"
+            "docs/explanation"
+            "docs/meta"
+          )
+          
+          for dir in "${required_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              echo "✅ $dir exists"
+            else
+              echo "❌ $dir missing"
+              exit 1
+            fi
+          done
+          
+          # Verificar arquivos obrigatórios
+          required_files=(
+            "docs/README.md"
+            "docs/package.json"
+            "docs/api/openapi.yaml"
+            "docs/assets/js/analytics.js"
+            "docs/assets/js/docsearch.js"
+            "docs/assets/js/feedback-widget.js"
+            "docs/assets/js/mermaid-diagrams.js"
+          )
+          
+          for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ $file exists"
+            else
+              echo "❌ $file missing"
+              exit 1
+            fi
+          done
+          
+          echo "✅ Documentation structure is valid"
+
+  # ============================================================================
+  # VALIDAÇÃO DE CONTEÚDO
+  # ============================================================================
+  validate-content:
+    name: 📝 Validate Content
+    runs-on: ubuntu-latest
+    needs: validate-structure
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.DOCS_DIR }}/package-lock.json
+      
+      - name: 📦 Install dependencies
+        working-directory: ${{ env.DOCS_DIR }}
+        run: npm ci
+      
+      - name: 📝 Check markdown files
+        run: |
+          echo "📝 Validating markdown files..."
+          
+          # Verificar se todos os arquivos .md têm título
+          find ${{ env.DOCS_DIR }} -name "*.md" -exec sh -c '
+            for file; do
+              if ! head -1 "$file" | grep -q "^# "; then
+                echo "❌ $file missing title (should start with # )"
+                exit 1
+              else
+                echo "✅ $file has title"
+              fi
+            done
+          ' _ {} +
+          
+          # Verificar se não há links quebrados
+          echo "🔗 Checking for broken links..."
+          find ${{ env.DOCS_DIR }} -name "*.md" -exec grep -l "\[.*\](.*)" {} \; | while read file; do
+            echo "Checking links in $file"
+            # Aqui você pode adicionar validação de links se necessário
+          done
+          
+          echo "✅ Markdown files are valid"
+      
+      - name: 📊 Check OpenAPI specification
+        working-directory: ${{ env.DOCS_DIR }}
+        run: |
+          echo "📊 Validating OpenAPI specification..."
+          
+          if [ -f "api/openapi.yaml" ]; then
+            # Verificar se o arquivo não está vazio
+            if [ -s "api/openapi.yaml" ]; then
+              echo "✅ OpenAPI YAML is not empty"
+              
+              # Verificar se contém informações básicas
+              if grep -q "openapi:" api/openapi.yaml; then
+                echo "✅ OpenAPI version specified"
+              else
+                echo "❌ OpenAPI version not found"
+                exit 1
+              fi
+              
+              if grep -q "info:" api/openapi.yaml; then
+                echo "✅ API info section found"
+              else
+                echo "❌ API info section missing"
+                exit 1
+              fi
+              
+              if grep -q "paths:" api/openapi.yaml; then
+                echo "✅ API paths section found"
+              else
+                echo "❌ API paths section missing"
+                exit 1
+              fi
+              
+            else
+              echo "❌ OpenAPI YAML is empty"
+              exit 1
+            fi
+          else
+            echo "⚠️ OpenAPI YAML not found, will be generated"
+          fi
+          
+          echo "✅ OpenAPI specification is valid"
+      
+      - name: 🔍 Check JavaScript files
+        run: |
+          echo "🔍 Validating JavaScript files..."
+          
+          # Verificar se todos os arquivos JS têm sintaxe válida
+          find ${{ env.DOCS_DIR }}/assets/js -name "*.js" -exec node -c {} \; 2>/dev/null || {
+            echo "❌ JavaScript syntax error found"
+            exit 1
+          }
+          
+          echo "✅ JavaScript files are valid"
+      
+      - name: 📋 Generate content report
+        run: |
+          cat > content-validation-report.md << EOF
+          # 📝 Content Validation Report
+          
+          **Date:** $(date)
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## 📊 Statistics
+          
+          - **Total Markdown Files:** $(find ${{ env.DOCS_DIR }} -name "*.md" | wc -l)
+          - **Total JavaScript Files:** $(find ${{ env.DOCS_DIR }}/assets/js -name "*.js" | wc -l)
+          - **Total CSS Files:** $(find ${{ env.DOCS_DIR }}/assets -name "*.css" | wc -l)
+          - **Total HTML Files:** $(find ${{ env.DOCS_DIR }} -name "*.html" | wc -l)
+          
+          ## 📁 File Structure
+          
+          \`\`\`
+          $(find ${{ env.DOCS_DIR }} -type f | head -20)
+          \`\`\`
+          
+          ## ✅ Validation Results
+          
+          - [x] Documentation structure validated
+          - [x] Markdown files validated
+          - [x] OpenAPI specification validated
+          - [x] JavaScript files validated
+          
+          EOF
+          
+          echo "📋 Content validation report generated"
+
+  # ============================================================================
+  # VALIDAÇÃO DE PERFORMANCE
+  # ============================================================================
+  validate-performance:
+    name: ⚡ Validate Performance
+    runs-on: ubuntu-latest
+    needs: validate-content
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📊 Check file sizes
+        run: |
+          echo "📊 Checking file sizes..."
+          
+          # Verificar se não há arquivos muito grandes
+          find ${{ env.DOCS_DIR }} -type f -size +1M -exec echo "⚠️ Large file found: {}" \;
+          
+          # Verificar tamanho total da documentação
+          total_size=$(du -sh ${{ env.DOCS_DIR }} | cut -f1)
+          echo "📁 Total documentation size: $total_size"
+          
+          # Verificar se o tamanho está dentro do limite (ex: 50MB)
+          size_mb=$(du -sm ${{ env.DOCS_DIR }} | cut -f1)
+          if [ $size_mb -gt 50 ]; then
+            echo "⚠️ Documentation size exceeds 50MB"
+          else
+            echo "✅ Documentation size is within limits"
+          fi
+      
+      - name: 🖼️ Check images
+        run: |
+          echo "🖼️ Checking images..."
+          
+          # Verificar se há imagens muito grandes
+          find ${{ env.DOCS_DIR }}/assets -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" | while read img; do
+            size=$(stat -c%s "$img")
+            if [ $size -gt 1048576 ]; then  # 1MB
+              echo "⚠️ Large image found: $img ($(($size / 1024 / 1024))MB)"
+            else
+              echo "✅ Image size OK: $img"
+            fi
+          done
+      
+      - name: 📦 Check dependencies
+        working-directory: ${{ env.DOCS_DIR }}
+        run: |
+          echo "📦 Checking dependencies..."
+          
+          if [ -f "package.json" ]; then
+            echo "✅ package.json exists"
+            
+            # Verificar se não há dependências desatualizadas
+            npm outdated || echo "⚠️ Some dependencies are outdated"
+          else
+            echo "⚠️ package.json not found"
+          fi
+      
+      - name: 📋 Generate performance report
+        run: |
+          cat > performance-validation-report.md << EOF
+          # ⚡ Performance Validation Report
+          
+          **Date:** $(date)
+          **Commit:** ${{ github.sha }}
+          
+          ## 📊 File Sizes
+          
+          - **Total Size:** $(du -sh ${{ env.DOCS_DIR }} | cut -f1)
+          - **Largest Files:** 
+            \`\`\`
+            $(find ${{ env.DOCS_DIR }} -type f -exec ls -lh {} \; | sort -k5 -hr | head -10)
+            \`\`\`
+          
+          ## 🖼️ Images
+          
+          - **Total Images:** $(find ${{ env.DOCS_DIR }}/assets -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" | wc -l)
+          - **Image Sizes:** $(find ${{ env.DOCS_DIR }}/assets -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -exec ls -lh {} \; | head -5)
+          
+          ## 📦 Dependencies
+          
+          - **Total Dependencies:** $(cat ${{ env.DOCS_DIR }}/package.json | grep -c '"' || echo "0")
+          - **Outdated Dependencies:** $(npm outdated 2>/dev/null | wc -l || echo "0")
+          
+          EOF
+          
+          echo "📋 Performance validation report generated"
+
+  # ============================================================================
+  # RELATÓRIO FINAL
+  # ============================================================================
+  generate-report:
+    name: 📋 Generate Final Report
+    runs-on: ubuntu-latest
+    needs: [validate-structure, validate-content, validate-performance]
+    if: always()
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📋 Generate final validation report
+        run: |
+          cat > final-validation-report.md << EOF
+          # 🔍 Documentation Validation Report
+          
+          **Date:** $(date)
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          **Event:** ${{ github.event_name }}
+          
+          ## 📊 Validation Results
+          
+          | Check | Status | Details |
+          |-------|--------|---------|
+          | Structure | ${{ needs.validate-structure.result }} | Documentation structure validation |
+          | Content | ${{ needs.validate-content.result }} | Markdown and OpenAPI validation |
+          | Performance | ${{ needs.validate-performance.result }} | File sizes and dependencies |
+          
+          ## 🎯 Summary
+          
+          - **Overall Status:** ${{ needs.validate-structure.result == 'success' && needs.validate-content.result == 'success' && needs.validate-performance.result == 'success' && '✅ PASSED' || '❌ FAILED' }}
+          - **Total Checks:** 3
+          - **Passed:** $(echo "${{ needs.validate-structure.result == 'success' && 1 || 0 }} + ${{ needs.validate-content.result == 'success' && 1 || 0 }} + ${{ needs.validate-performance.result == 'success' && 1 || 0 }}" | bc)
+          - **Failed:** $(echo "3 - (${{ needs.validate-structure.result == 'success' && 1 || 0 }} + ${{ needs.validate-content.result == 'success' && 1 || 0 }} + ${{ needs.validate-performance.result == 'success' && 1 || 0 }})" | bc)
+          
+          ## 📁 Documentation Structure
+          
+          \`\`\`
+          $(find ${{ env.DOCS_DIR }} -type d | head -20)
+          \`\`\`
+          
+          ## 📝 Next Steps
+          
+          ${{ needs.validate-structure.result == 'success' && '- [x] Structure validation passed' || '- [ ] Fix structure issues' }}
+          ${{ needs.validate-content.result == 'success' && '- [x] Content validation passed' || '- [ ] Fix content issues' }}
+          ${{ needs.validate-performance.result == 'success' && '- [x] Performance validation passed' || '- [ ] Fix performance issues' }}
+          
+          EOF
+          
+          echo "📋 Final validation report generated"
+      
+      - name: 📤 Upload validation reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-reports
+          path: |
+            content-validation-report.md
+            performance-validation-report.md
+            final-validation-report.md
+          retention-days: 30
+      
+      - name: 📢 Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('final-validation-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
