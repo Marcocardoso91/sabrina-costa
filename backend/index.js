@@ -1,9 +1,7 @@
 /**
- * Vercel Serverless Entry Point
- * Dashboard Sabrina Costa API
+ * Vercel Entry Point
+ * Dashboard Sabrina Costa Backend
  */
 
-const app = require('./server');
-
-// Export for Vercel serverless functions
-module.exports = app;
+// Import the main server
+require('./server.js');
