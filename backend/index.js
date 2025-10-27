@@ -3,5 +3,6 @@
  * Dashboard Sabrina Costa Backend
  */
 
-// Import the main server
-require('./server.js');
+// Import and export the main server
+const app = require('./server.js');
+module.exports = app;

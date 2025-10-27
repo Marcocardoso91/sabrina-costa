@@ -48,3 +48,5 @@ __pycache__/
 *$py.class
 .Python
 
+.vercel
+.env*.local
