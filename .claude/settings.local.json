@@ -13,7 +13,8 @@
       "Bash(vercel --token bEZtFPDtRylGnmLE70jjDwav --yes --prod)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []
