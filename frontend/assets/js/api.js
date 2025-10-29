@@ -4,7 +4,7 @@
 const API_CONFIG = {
     baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000/api'
-        : 'https://backend-mgw4xh04p-marcocardoso28s-projects.vercel.app/api',
+        : 'https://sabrina-costa-aixs.vercel.app/api',
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json'
