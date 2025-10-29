@@ -1,0 +1,34 @@
+/**
+ * Debug Endpoint
+ * Dashboard Sabrina Costa
+ */
+
+const express = require('express');
+const router = express.Router();
+
+// Debug endpoint to check environment variables
+router.get('/debug', (req, res) => {
+    const envVars = {
+        NODE_ENV: process.env.NODE_ENV,
+        DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+        JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+        PORT: process.env.PORT,
+        CORS_ORIGIN: process.env.CORS_ORIGIN,
+        EVOLUTION_API_URL: process.env.EVOLUTION_API_URL,
+        EVOLUTION_API_KEY: process.env.EVOLUTION_API_KEY ? 'SET' : 'NOT SET',
+        WHATSAPP_NUMBER: process.env.WHATSAPP_NUMBER,
+        WEBHOOK_SECRET: process.env.WEBHOOK_SECRET ? 'SET' : 'NOT SET',
+        // Show partial DATABASE_URL for debugging
+        DATABASE_URL_PARTIAL: process.env.DATABASE_URL ? 
+            process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
+    };
+
+    res.json({
+        success: true,
+        message: 'Environment variables debug',
+        timestamp: new Date().toISOString(),
+        environment: envVars
+    });
+});
+
+module.exports = router;

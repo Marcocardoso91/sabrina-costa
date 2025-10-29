@@ -63,6 +63,7 @@ const alertsRoutes = require('./api/alerts');
 const scheduleRoutes = require('./api/schedule');
 const hooksRoutes = require('./api/hooks');
 const configRoutes = require('./api/config');
+const debugRoutes = require('./api/debug');
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -82,6 +83,7 @@ app.use('/api/alerts', alertsRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/hooks', hooksRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/debug', debugRoutes);
 
 // 404 handler
 app.use((req, res) => {
