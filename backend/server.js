@@ -24,10 +24,12 @@ app.use(helmet());
 
 // CORS configuration
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
+    origin: [
         'http://localhost:3000',
         'https://sabrina-costa.vercel.app',
-        'https://sabrina-costa-marcocardoso91s-projects.vercel.app'
+        'https://sabrina-costa-marcocardoso91s-projects.vercel.app',
+        'https://frontend-9kn1xaumf-marcocardoso28s-projects.vercel.app',
+        ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [])
     ],
     credentials: true,
     optionsSuccessStatus: 200
