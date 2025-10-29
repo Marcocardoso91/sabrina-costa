@@ -116,5 +116,46 @@ router.get('/me', authenticateJWT, async (req, res, next) => {
     }
 });
 
+/**
+ * POST /api/auth/create-admin
+ * Create admin user (temporary endpoint)
+ */
+router.post('/create-admin', async (req, res, next) => {
+    try {
+        const bcrypt = require('bcryptjs');
+        
+        // Create admin user
+        const email = 'gerente@macspark.dev';
+        const password = 'Sabrina2025!';
+        const name = 'Marco';
+        const role = 'admin';
+        
+        // Hash password
+        const passwordHash = await bcrypt.hash(password, 10);
+        
+        // Insert user
+        const result = await query(
+            'INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO NOTHING RETURNING id, email, name, role',
+            [email, passwordHash, name, role]
+        );
+        
+        if (result.rows.length > 0) {
+            res.json({
+                success: true,
+                message: 'Usuário admin criado com sucesso',
+                user: result.rows[0]
+            });
+        } else {
+            res.json({
+                success: true,
+                message: 'Usuário admin já existe'
+            });
+        }
+        
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = router;
 
