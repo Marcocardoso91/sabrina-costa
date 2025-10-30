@@ -31,8 +31,9 @@ const CONFIG = {
   // Dependências
   dependencies: [
     'swagger-jsdoc@^6.2.8',
-    'swagger-codegen-cli@^3.0.0',
-    'nodemon@^3.0.1'
+    'swagger-cli@^4.0.4',
+    'nodemon@^3.0.1',
+    'husky@^8.0.3'
   ]
 };
 
@@ -150,7 +151,7 @@ function createPackageJson() {
       'docs:serve': 'python -m http.server 8080',
       'docs:build': 'npm run docs:generate',
       'docs:watch': 'nodemon scripts/generate-api-docs.js',
-      'docs:validate': 'swagger-codegen validate -i api/openapi.yaml',
+      'docs:validate': 'swagger-cli validate api/openapi.yaml',
       'docs:deploy': 'npm run docs:build && echo "Documentação pronta para deploy"'
     },
     devDependencies: {},

@@ -1,0 +1,385 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Dashboard Sabrina Costa API",
+    "version": "1.0.0",
+    "description": "\n        API RESTful completa para o Dashboard Sabrina Costa.\n        \n        ## Funcionalidades\n        \n        - 🔐 **Autenticação JWT** - Sistema seguro de login\n        - 📊 **Gestão de Métricas** - CRUD completo de métricas do Instagram\n        - 📅 **Cronograma de Posts** - Agendamento e gestão de conteúdo\n        - 🚨 **Sistema de Alertas** - Notificações automáticas via WhatsApp\n        - 🎣 **Ganchos Virais** - Biblioteca de hooks para conteúdo\n        - 🔗 **Webhooks** - Integração com sistemas externos\n        - ⚙️ **Configurações** - Gestão de parâmetros do sistema\n        \n        ## Autenticação\n        \n        Todos os endpoints protegidos exigem um JWT válido no header `Authorization`:\n        ```\n        Authorization: Bearer <seu-jwt-token>\n        ```\n        \n        ## Rate Limiting\n        \n        A API implementa rate limiting para garantir estabilidade:\n        - **100 requests/minuto** por IP\n        - **1000 requests/hora** por usuário autenticado\n        \n        ## Códigos de Resposta\n        \n        - `200 OK` - Requisição bem-sucedida\n        - `201 Created` - Recurso criado com sucesso\n        - `400 Bad Request` - Dados inválidos\n        - `401 Unauthorized` - Token ausente/inválido\n        - `403 Forbidden` - Acesso negado\n        - `404 Not Found` - Recurso não encontrado\n        - `429 Too Many Requests` - Rate limit excedido\n        - `500 Internal Server Error` - Erro interno\n      ",
+    "contact": {
+      "name": "Marco Cardoso",
+      "email": "marco@example.com",
+      "url": "https://github.com/Marcocardoso91"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://backend-smoky-theta.vercel.app/api",
+      "description": "Servidor de Produção"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Servidor de Desenvolvimento"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autenticação",
+      "description": "Endpoints para autenticação e gestão de usuários"
+    },
+    {
+      "name": "Métricas",
+      "description": "Gestão de métricas de desempenho do Instagram"
+    },
+    {
+      "name": "Cronograma",
+      "description": "Agendamento e gestão de posts"
+    },
+    {
+      "name": "Alertas",
+      "description": "Sistema de notificações e alertas"
+    },
+    {
+      "name": "Ganchos",
+      "description": "Biblioteca de ganchos virais e categorias"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Endpoints para integração externa"
+    },
+    {
+      "name": "Configurações",
+      "description": "Gestão de configurações do sistema"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtido através do endpoint /auth/login"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID único do usuário"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email do usuário"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do usuário"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "description": "Papel do usuário no sistema"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role"
+        ]
+      },
+      "Metric": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID único da métrica"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Data da métrica (YYYY-MM-DD)"
+          },
+          "reach": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Alcance (número de pessoas)"
+          },
+          "ctr": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Taxa de cliques (%)"
+          },
+          "cpc": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "description": "Custo por clique (R$)"
+          },
+          "cpm": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "description": "Custo por mil impressões (R$)"
+          },
+          "frequency": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "description": "Frequência de exibição"
+          },
+          "profileVisits": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Visitas ao perfil"
+          },
+          "newFollowers": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Novos seguidores"
+          },
+          "cost": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "description": "Custo total (R$)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização"
+          }
+        },
+        "required": [
+          "date"
+        ]
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID único do post"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Data agendada para o post"
+          },
+          "weekNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 52,
+            "description": "Número da semana"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "carousel",
+              "reel",
+              "story",
+              "post"
+            ],
+            "description": "Formato do conteúdo"
+          },
+          "theme": {
+            "type": "string",
+            "description": "Tema do post"
+          },
+          "hook": {
+            "type": "string",
+            "description": "Gancho viral do post"
+          },
+          "cta": {
+            "type": "string",
+            "description": "Call-to-action"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "published",
+              "cancelled"
+            ],
+            "description": "Status do post"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização"
+          }
+        },
+        "required": [
+          "date",
+          "format",
+          "theme"
+        ]
+      },
+      "Alert": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID único do alerta"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo do alerta"
+          },
+          "message": {
+            "type": "string",
+            "description": "Mensagem do alerta"
+          },
+          "thresholdValue": {
+            "type": "number",
+            "format": "float",
+            "description": "Valor limite"
+          },
+          "actualValue": {
+            "type": "number",
+            "format": "float",
+            "description": "Valor atual"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Data do alerta"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de envio"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação"
+          }
+        },
+        "required": [
+          "type",
+          "message",
+          "date"
+        ]
+      },
+      "Hook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID único do gancho"
+          },
+          "title": {
+            "type": "string",
+            "description": "Título do gancho"
+          },
+          "content": {
+            "type": "string",
+            "description": "Conteúdo do gancho"
+          },
+          "category": {
+            "type": "string",
+            "description": "Categoria do gancho"
+          },
+          "usageCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Número de usos"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da última atualização"
+          }
+        },
+        "required": [
+          "title",
+          "content",
+          "category"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem de erro"
+          },
+          "code": {
+            "type": "string",
+            "description": "Código do erro"
+          },
+          "details": {
+            "type": "object",
+            "description": "Detalhes adicionais do erro"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem de sucesso"
+          },
+          "data": {
+            "type": "object",
+            "description": "Dados retornados"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {}
+}

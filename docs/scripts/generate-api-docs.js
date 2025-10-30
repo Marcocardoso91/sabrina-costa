@@ -13,6 +13,10 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const fs = require('fs');
 const path = require('path');
 
+const ROOT_DIR = path.join(__dirname, '..', '..');
+const backendPath = (...segments) => path.join(ROOT_DIR, 'backend', ...segments);
+const toPosixPath = targetPath => targetPath.split(path.sep).join('/');
+
 // ============================================================================
 // CONFIGURAÇÃO DO SWAGGER-JSDOC
 // ============================================================================
@@ -404,10 +408,11 @@ const swaggerOptions = {
     ]
   },
   apis: [
-    // Incluir todos os arquivos de rotas do backend
-    './backend/routes/*.js',
-    './backend/controllers/*.js',
-    './backend/middleware/*.js'
+    // Incluir todos os arquivos relevantes do backend
+    toPosixPath(backendPath('api', '**', '*.js')),
+    toPosixPath(backendPath('routes', '**', '*.js')),
+    toPosixPath(backendPath('controllers', '**', '*.js')),
+    toPosixPath(backendPath('middleware', '**', '*.js'))
   ]
 };
 
@@ -532,27 +537,32 @@ function convertToYAML(obj) {
   
   // Adicionar paths (simplificado)
   yaml += 'paths:\n';
-  Object.entries(obj.paths).forEach(([path, methods]) => {
-    yaml += `  ${path}:\n`;
-    Object.entries(methods).forEach(([method, spec]) => {
-      yaml += `    ${method}:\n`;
-      yaml += `      summary: ${spec.summary}\n`;
-      if (spec.tags) {
-        yaml += `      tags: [${spec.tags.join(', ')}]\n`;
-      }
-      if (spec.security) {
-        yaml += '      security:\n';
-        yaml += '        - bearerAuth: []\n';
-      }
-      if (spec.responses) {
-        yaml += '      responses:\n';
-        Object.entries(spec.responses).forEach(([code, response]) => {
-          yaml += `        ${code}:\n`;
-          yaml += `          description: ${response.description}\n`;
-        }));
-      }
+  const pathEntries = Object.entries(obj.paths || {});
+  if (pathEntries.length === 0) {
+    yaml += '  {}\n';
+  } else {
+    pathEntries.forEach(([path, methods]) => {
+      yaml += `  ${path}:\n`;
+      Object.entries(methods).forEach(([method, spec]) => {
+        yaml += `    ${method}:\n`;
+        yaml += `      summary: ${spec.summary}\n`;
+        if (spec.tags) {
+          yaml += `      tags: [${spec.tags.join(', ')}]\n`;
+        }
+        if (spec.security) {
+          yaml += '      security:\n';
+          yaml += '        - bearerAuth: []\n';
+        }
+        if (spec.responses) {
+          yaml += '      responses:\n';
+          Object.entries(spec.responses).forEach(([code, response]) => {
+            yaml += `        ${code}:\n`;
+            yaml += `          description: ${response.description}\n`;
+          });
+        }
+      });
     });
-  });
+  }
   
   return yaml;
 }

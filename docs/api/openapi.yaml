@@ -1,1787 +1,284 @@
 openapi: 3.0.0
 info:
   title: Dashboard Sabrina Costa API
-  description: |
-    API REST completa para o Dashboard Sabrina Costa - Sistema de gestão de métricas do Instagram.
-    
-    ## Autenticação
-    Esta API usa JWT (JSON Web Tokens) para autenticação. Inclua o token no header `Authorization: Bearer YOUR_TOKEN`.
-    
-    ## Rate Limiting
-    - 100 requests por minuto por IP
-    - Headers de resposta incluem informações de rate limiting
-    
-    ## Códigos de Resposta
-    - `200` - Sucesso
-    - `201` - Criado
-    - `400` - Dados inválidos
-    - `401` - Token inválido
-    - `403` - Permissão negada
-    - `404` - Recurso não encontrado
-    - `429` - Rate limit excedido
-    - `500` - Erro interno
-    
   version: 1.0.0
-  contact:
-    name: Marco Cardoso
-    email: ops@macspark.dev
-    url: https://github.com/Marcocardoso91/sabrina-costa
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-
+  description: |
+        
+            API RESTful completa para o Dashboard Sabrina Costa.
+            
+            ## Funcionalidades
+            
+            - 🔐 **Autenticação JWT** - Sistema seguro de login
+            - 📊 **Gestão de Métricas** - CRUD completo de métricas do Instagram
+            - 📅 **Cronograma de Posts** - Agendamento e gestão de conteúdo
+            - 🚨 **Sistema de Alertas** - Notificações automáticas via WhatsApp
+            - 🎣 **Ganchos Virais** - Biblioteca de hooks para conteúdo
+            - 🔗 **Webhooks** - Integração com sistemas externos
+            - ⚙️ **Configurações** - Gestão de parâmetros do sistema
+            
+            ## Autenticação
+            
+            Todos os endpoints protegidos exigem um JWT válido no header `Authorization`:
+            ```
+            Authorization: Bearer <seu-jwt-token>
+            ```
+            
+            ## Rate Limiting
+            
+            A API implementa rate limiting para garantir estabilidade:
+            - **100 requests/minuto** por IP
+            - **1000 requests/hora** por usuário autenticado
+            
+            ## Códigos de Resposta
+            
+            - `200 OK` - Requisição bem-sucedida
+            - `201 Created` - Recurso criado com sucesso
+            - `400 Bad Request` - Dados inválidos
+            - `401 Unauthorized` - Token ausente/inválido
+            - `403 Forbidden` - Acesso negado
+            - `404 Not Found` - Recurso não encontrado
+            - `429 Too Many Requests` - Rate limit excedido
+            - `500 Internal Server Error` - Erro interno
+          
 servers:
-  - url: https://backend-32jjcbcb7-marcocardoso28s-projects.vercel.app/api
-    description: Produção
+  - url: https://backend-smoky-theta.vercel.app/api
+    description: Servidor de Produção
   - url: http://localhost:3000/api
-    description: Desenvolvimento
-
-security:
-  - bearerAuth: []
-
-paths:
-  /auth/login:
-    post:
-      tags:
-        - Autenticação
-      summary: Fazer login
-      description: Autentica usuário e retorna token JWT
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-                - password
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: gerente@macspark.dev
-                  description: Email do usuário
-                password:
-                  type: string
-                  format: password
-                  example: Sabrina2025!
-                  description: Senha do usuário
-            examples:
-              login_example:
-                summary: Login básico
-                value:
-                  email: gerente@macspark.dev
-                  password: Sabrina2025!
-      responses:
-        '200':
-          description: Login bem-sucedido
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  token:
-                    type: string
-                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-                  user:
-                    $ref: '#/components/schemas/User'
-              examples:
-                success_response:
-                  summary: Resposta de sucesso
-                  value:
-                    success: true
-                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiZ2VyZW50ZUBtYWNzcGFyay5kZXYiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2OTgwODY0MDAsImV4cCI6MTY5ODY5MTIwMH0.signature
-                    user:
-                      id: 1
-                      email: gerente@macspark.dev
-                      name: Marco
-                      role: admin
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                invalid_credentials:
-                  summary: Credenciais inválidas
-                  value:
-                    success: false
-                    error: Credenciais inválidas
-        '429':
-          description: Rate limit excedido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/logout:
-    post:
-      tags:
-        - Autenticação
-      summary: Fazer logout
-      description: Invalida token JWT do usuário
-      responses:
-        '200':
-          description: Logout bem-sucedido
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Logout realizado com sucesso
-
-  /auth/me:
-    get:
-      tags:
-        - Autenticação
-      summary: Verificar usuário atual
-      description: Retorna informações do usuário autenticado
-      responses:
-        '200':
-          description: Informações do usuário
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  user:
-                    $ref: '#/components/schemas/User'
-        '401':
-          description: Token inválido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/refresh:
-    post:
-      tags:
-        - Autenticação
-      summary: Renovar token
-      description: Renova token JWT expirado
-      responses:
-        '200':
-          description: Token renovado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  token:
-                    type: string
-                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-                  user:
-                    $ref: '#/components/schemas/User'
-
-  /metrics:
-    get:
-      tags:
-        - Métricas
-      summary: Listar métricas
-      description: Lista todas as métricas com filtros opcionais e paginação
-      parameters:
-        - name: page
-          in: query
-          description: Página atual
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: limit
-          in: query
-          description: Itens por página
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-        - name: start_date
-          in: query
-          description: Data inicial (YYYY-MM-DD)
-          required: false
-          schema:
-            type: string
-            format: date
-            example: 2025-10-01
-        - name: end_date
-          in: query
-          description: Data final (YYYY-MM-DD)
-          required: false
-          schema:
-            type: string
-            format: date
-            example: 2025-10-31
-        - name: sort
-          in: query
-          description: Campo para ordenação
-          required: false
-          schema:
-            type: string
-            enum: [date, ctr, cpc, cost, created_at]
-            default: date
-        - name: order
-          in: query
-          description: Direção da ordenação
-          required: false
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: desc
-        - name: ctr_min
-          in: query
-          description: CTR mínimo
-          required: false
-          schema:
-            type: number
-            minimum: 0
-            maximum: 100
-        - name: cpc_max
-          in: query
-          description: CPC máximo
-          required: false
-          schema:
-            type: number
-            minimum: 0
-      responses:
-        '200':
-          description: Lista de métricas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Metric'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-              examples:
-                metrics_list:
-                  summary: Lista de métricas
-                  value:
-                    success: true
-                    data:
-                      - id: 1
-                        date: 2025-10-23
-                        reach: 1091
-                        ctr: 7.5
-                        cpc: 0.09
-                        cpm: 2.15
-                        frequency: 1.02
-                        profile_visits: 80
-                        new_followers: 45
-                        cost: 20.00
-                        created_at: 2025-10-23T18:00:00Z
-                        updated_at: 2025-10-23T18:00:00Z
-                    pagination:
-                      page: 1
-                      limit: 10
-                      total: 150
-                      pages: 15
-                      hasNext: true
-                      hasPrev: false
-
-    post:
-      tags:
-        - Métricas
-      summary: Criar métrica
-      description: Cria uma nova métrica do Instagram
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MetricInput'
-            examples:
-              basic_metric:
-                summary: Métrica básica
-                value:
-                  date: 2025-10-23
-                  ctr: 7.5
-                  cpc: 0.09
-                  cost: 20.00
-              complete_metric:
-                summary: Métrica completa
-                value:
-                  date: 2025-10-23
-                  reach: 1091
-                  ctr: 7.5
-                  cpc: 0.09
-                  cpm: 2.15
-                  frequency: 1.02
-                  profile_visits: 80
-                  new_followers: 45
-                  cost: 20.00
-      responses:
-        '201':
-          description: Métrica criada com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Metric'
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationError'
-
-  /metrics/{id}:
-    get:
-      tags:
-        - Métricas
-      summary: Obter métrica
-      description: Retorna uma métrica específica por ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID da métrica
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Métrica encontrada
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Metric'
-        '404':
-          description: Métrica não encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-    put:
-      tags:
-        - Métricas
-      summary: Atualizar métrica
-      description: Atualiza uma métrica existente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID da métrica
-          schema:
-            type: integer
-            example: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MetricInput'
-            examples:
-              update_example:
-                summary: Atualização parcial
-                value:
-                  ctr: 8.2
-                  cpc: 0.08
-                  new_followers: 50
-      responses:
-        '200':
-          description: Métrica atualizada
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Metric'
-        '404':
-          description: Métrica não encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-    delete:
-      tags:
-        - Métricas
-      summary: Deletar métrica
-      description: Remove uma métrica do sistema
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID da métrica
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Métrica deletada
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Métrica deletada com sucesso
-        '404':
-          description: Métrica não encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /metrics/summary:
-    get:
-      tags:
-        - Métricas
-      summary: Resumo das métricas
-      description: Retorna estatísticas resumidas das métricas
-      parameters:
-        - name: start_date
-          in: query
-          description: Data inicial (YYYY-MM-DD)
-          required: false
-          schema:
-            type: string
-            format: date
-        - name: end_date
-          in: query
-          description: Data final (YYYY-MM-DD)
-          required: false
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: Resumo das métricas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/MetricSummary'
-
-  /schedule:
-    get:
-      tags:
-        - Cronograma
-      summary: Listar posts
-      description: Lista todos os posts do cronograma
-      parameters:
-        - name: page
-          in: query
-          description: Página atual
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: limit
-          in: query
-          description: Itens por página
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-        - name: status
-          in: query
-          description: Status do post
-          required: false
-          schema:
-            type: string
-            enum: [planned, published, cancelled]
-        - name: date
-          in: query
-          description: Filtrar por data
-          required: false
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: Lista de posts
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Post'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-
-    post:
-      tags:
-        - Cronograma
-      summary: Criar post
-      description: Cria um novo post no cronograma
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostInput'
-      responses:
-        '201':
-          description: Post criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Post'
-
-  /schedule/{id}:
-    get:
-      tags:
-        - Cronograma
-      summary: Obter post
-      description: Retorna um post específico por ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID do post
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Post encontrado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Post'
-
-    put:
-      tags:
-        - Cronograma
-      summary: Atualizar post
-      description: Atualiza um post existente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID do post
-          schema:
-            type: integer
-            example: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostInput'
-      responses:
-        '200':
-          description: Post atualizado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Post'
-
-    delete:
-      tags:
-        - Cronograma
-      summary: Deletar post
-      description: Remove um post do cronograma
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID do post
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Post deletado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Post deletado com sucesso
-
-  /alerts:
-    get:
-      tags:
-        - Alertas
-      summary: Listar alertas
-      description: Lista todos os alertas do sistema
-      parameters:
-        - name: page
-          in: query
-          description: Página atual
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: limit
-          in: query
-          description: Itens por página
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-        - name: type
-          in: query
-          description: Tipo de alerta
-          required: false
-          schema:
-            type: string
-            enum: [ctr_low, cpc_high, cpm_high, frequency_high, cost_per_follower_high]
-        - name: start_date
-          in: query
-          description: Data inicial
-          required: false
-          schema:
-            type: string
-            format: date
-        - name: end_date
-          in: query
-          description: Data final
-          required: false
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: Lista de alertas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Alert'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-
-    post:
-      tags:
-        - Alertas
-      summary: Criar alerta
-      description: Cria um novo alerta manual
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AlertInput'
-      responses:
-        '201':
-          description: Alerta criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Alert'
-
-  /alerts/config:
-    get:
-      tags:
-        - Alertas
-      summary: Obter configuração de alertas
-      description: Retorna a configuração atual dos alertas
-      responses:
-        '200':
-          description: Configuração de alertas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/AlertConfig'
-
-    put:
-      tags:
-        - Alertas
-      summary: Configurar alertas
-      description: Atualiza a configuração dos alertas
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AlertConfig'
-      responses:
-        '200':
-          description: Configuração atualizada
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/AlertConfig'
-
-  /hooks:
-    get:
-      tags:
-        - Ganchos Virais
-      summary: Listar ganchos
-      description: Lista todos os ganchos virais
-      parameters:
-        - name: page
-          in: query
-          description: Página atual
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: limit
-          in: query
-          description: Itens por página
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-        - name: category
-          in: query
-          description: Categoria do gancho
-          required: false
-          schema:
-            type: string
-            enum: [engagement, curiosity, urgency, social_proof, humor, controversy]
-        - name: search
-          in: query
-          description: Buscar por texto
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Lista de ganchos
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Hook'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-
-    post:
-      tags:
-        - Ganchos Virais
-      summary: Criar gancho
-      description: Cria um novo gancho viral
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HookInput'
-      responses:
-        '201':
-          description: Gancho criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Hook'
-
-  /hooks/{id}:
-    get:
-      tags:
-        - Ganchos Virais
-      summary: Obter gancho
-      description: Retorna um gancho específico por ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID do gancho
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Gancho encontrado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Hook'
-
-    put:
-      tags:
-        - Ganchos Virais
-      summary: Atualizar gancho
-      description: Atualiza um gancho existente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID do gancho
-          schema:
-            type: integer
-            example: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HookInput'
-      responses:
-        '200':
-          description: Gancho atualizado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Hook'
-
-    delete:
-      tags:
-        - Ganchos Virais
-      summary: Deletar gancho
-      description: Remove um gancho do sistema
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID do gancho
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Gancho deletado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Gancho deletado com sucesso
-
-  /hooks/{id}/increment:
-    put:
-      tags:
-        - Ganchos Virais
-      summary: Incrementar uso
-      description: Incrementa o contador de uso de um gancho
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID do gancho
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Uso incrementado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Hook'
-
-  /hooks/categories/list:
-    get:
-      tags:
-        - Ganchos Virais
-      summary: Listar categorias
-      description: Retorna lista de categorias disponíveis
-      responses:
-        '200':
-          description: Lista de categorias
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                          example: engagement
-                        label:
-                          type: string
-                          example: Engajamento
-                        description:
-                          type: string
-                          example: Ganchos que aumentam o engajamento
-                        count:
-                          type: integer
-                          example: 15
-
-  /webhook/metrics:
-    post:
-      tags:
-        - Webhooks
-      summary: Receber métricas
-      description: Webhook para receber métricas do n8n
-      security:
-        - webhookAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: '#/components/schemas/MetricInput'
-                - type: array
-                  items:
-                    $ref: '#/components/schemas/MetricInput'
-            examples:
-              single_metric:
-                summary: Métrica única
-                value:
-                  date: 2025-10-23
-                  ctr: 7.5
-                  cpc: 0.09
-                  cost: 20.00
-              batch_metrics:
-                summary: Múltiplas métricas
-                value:
-                  - date: 2025-10-23
-                    ctr: 7.5
-                    cpc: 0.09
-                    cost: 20.00
-                  - date: 2025-10-24
-                    ctr: 8.2
-                    cpc: 0.08
-                    cost: 25.00
-      responses:
-        '200':
-          description: Métricas processadas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Métricas processadas com sucesso
-                  processed:
-                    type: integer
-                    example: 2
-                  alerts:
-                    type: integer
-                    example: 1
-
-  /webhook/metrics/csv:
-    post:
-      tags:
-        - Webhooks
-      summary: Receber CSV de métricas
-      description: Webhook para receber arquivo CSV de métricas
-      security:
-        - webhookAuth: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: Arquivo CSV com métricas
-                date_format:
-                  type: string
-                  description: Formato da data no CSV
-                  example: YYYY-MM-DD
-      responses:
-        '200':
-          description: CSV processado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: CSV processado com sucesso
-                  processed:
-                    type: integer
-                    example: 10
-                  errors:
-                    type: integer
-                    example: 2
-
-  /config:
-    get:
-      tags:
-        - Configurações
-      summary: Listar configurações
-      description: Lista todas as configurações do sistema
-      responses:
-        '200':
-          description: Lista de configurações
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Config'
-
-    put:
-      tags:
-        - Configurações
-      summary: Atualizar configurações
-      description: Atualiza múltiplas configurações
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties:
-                type: string
-            example:
-              site_name: Dashboard Sabrina Costa
-              timezone: America/Sao_Paulo
-              currency: BRL
-      responses:
-        '200':
-          description: Configurações atualizadas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Config'
-
-  /config/{key}:
-    get:
-      tags:
-        - Configurações
-      summary: Obter configuração
-      description: Retorna uma configuração específica
-      parameters:
-        - name: key
-          in: path
-          required: true
-          description: Chave da configuração
-          schema:
-            type: string
-            example: site_name
-      responses:
-        '200':
-          description: Configuração encontrada
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/Config'
-
+    description: Servidor de Desenvolvimento
+tags:
+  - name: Autenticação
+    description: Endpoints para autenticação e gestão de usuários
+  - name: Métricas
+    description: Gestão de métricas de desempenho do Instagram
+  - name: Cronograma
+    description: Agendamento e gestão de posts
+  - name: Alertas
+    description: Sistema de notificações e alertas
+  - name: Ganchos
+    description: Biblioteca de ganchos virais e categorias
+  - name: Webhooks
+    description: Endpoints para integração externa
+  - name: Configurações
+    description: Gestão de configurações do sistema
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Token JWT obtido via /auth/login
-    webhookAuth:
-      type: apiKey
-      in: header
-      name: X-Webhook-Token
-      description: Token de webhook para autenticação n8n
-
   schemas:
     User:
       type: object
       properties:
         id:
-          type: integer
-          example: 1
+          type: string
+          description: ID único do usuário
+          format: uuid
         email:
           type: string
+          description: Email do usuário
           format: email
-          example: gerente@macspark.dev
         name:
           type: string
-          example: Marco
+          description: Nome do usuário
         role:
           type: string
-          enum: [admin, user, viewer]
-          example: admin
-      required:
-        - id
-        - email
-        - name
-        - role
-
+          description: Papel do usuário no sistema
+          enum: [user, admin]
+        createdAt:
+          type: string
+          description: Data de criação
+          format: date-time
+        updatedAt:
+          type: string
+          description: Data da última atualização
+          format: date-time
+      required: [id, email, name, role]
     Metric:
       type: object
       properties:
         id:
-          type: integer
-          example: 1
+          type: string
+          description: ID único da métrica
+          format: uuid
         date:
           type: string
+          description: Data da métrica (YYYY-MM-DD)
           format: date
-          example: 2025-10-23
         reach:
           type: integer
-          description: Alcance do post
-          example: 1091
+          description: Alcance (número de pessoas)
+          minimum: 0
         ctr:
           type: number
+          description: Taxa de cliques (%)
           format: float
-          description: Click-through rate em porcentagem
           minimum: 0
           maximum: 100
-          example: 7.5
         cpc:
           type: number
+          description: Custo por clique (R$)
           format: float
-          description: Custo por clique
           minimum: 0
-          example: 0.09
         cpm:
           type: number
+          description: Custo por mil impressões (R$)
           format: float
-          description: Custo por mil impressões
           minimum: 0
-          example: 2.15
         frequency:
           type: number
-          format: float
           description: Frequência de exibição
+          format: float
           minimum: 0
-          example: 1.02
-        profile_visits:
+        profileVisits:
           type: integer
           description: Visitas ao perfil
           minimum: 0
-          example: 80
-        new_followers:
+        newFollowers:
           type: integer
           description: Novos seguidores
           minimum: 0
-          example: 45
         cost:
           type: number
+          description: Custo total (R$)
           format: float
-          description: Investimento total
           minimum: 0
-          example: 20.00
-        created_at:
+        createdAt:
           type: string
+          description: Data de criação
           format: date-time
-          example: 2025-10-23T18:00:00Z
-        updated_at:
+        updatedAt:
           type: string
+          description: Data da última atualização
           format: date-time
-          example: 2025-10-23T18:00:00Z
-      required:
-        - id
-        - date
-
-    MetricInput:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-          example: 2025-10-23
-        reach:
-          type: integer
-          minimum: 0
-          example: 1091
-        ctr:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          example: 7.5
-        cpc:
-          type: number
-          format: float
-          minimum: 0
-          example: 0.09
-        cpm:
-          type: number
-          format: float
-          minimum: 0
-          example: 2.15
-        frequency:
-          type: number
-          format: float
-          minimum: 0
-          example: 1.02
-        profile_visits:
-          type: integer
-          minimum: 0
-          example: 80
-        new_followers:
-          type: integer
-          minimum: 0
-          example: 45
-        cost:
-          type: number
-          format: float
-          minimum: 0
-          example: 20.00
-      required:
-        - date
-
-    MetricSummary:
-      type: object
-      properties:
-        total_records:
-          type: integer
-          example: 150
-        date_range:
-          type: object
-          properties:
-            start:
-              type: string
-              format: date
-              example: 2025-10-01
-            end:
-              type: string
-              format: date
-              example: 2025-10-31
-        averages:
-          type: object
-          properties:
-            ctr:
-              type: number
-              format: float
-              example: 6.8
-            cpc:
-              type: number
-              format: float
-              example: 0.12
-            cpm:
-              type: number
-              format: float
-              example: 3.45
-            frequency:
-              type: number
-              format: float
-              example: 1.15
-        totals:
-          type: object
-          properties:
-            reach:
-              type: integer
-              example: 45000
-            profile_visits:
-              type: integer
-              example: 3200
-            new_followers:
-              type: integer
-              example: 1200
-            cost:
-              type: number
-              format: float
-              example: 1500.00
-        performance:
-          type: object
-          properties:
-            best_day:
-              type: string
-              format: date
-              example: 2025-10-15
-            best_ctr:
-              type: number
-              format: float
-              example: 12.5
-            best_cpc:
-              type: number
-              format: float
-              example: 0.05
-            worst_day:
-              type: string
-              format: date
-              example: 2025-10-08
-            worst_ctr:
-              type: number
-              format: float
-              example: 2.1
-            worst_cpc:
-              type: number
-              format: float
-              example: 0.25
-
+      required: [date]
     Post:
       type: object
       properties:
         id:
-          type: integer
-          example: 1
+          type: string
+          description: ID único do post
+          format: uuid
         date:
           type: string
+          description: Data agendada para o post
           format: date
-          example: 2025-10-23
-        week_number:
+        weekNumber:
           type: integer
-          example: 1
+          description: Número da semana
+          minimum: 1
+          maximum: 52
         format:
           type: string
-          enum: [reel, post, story, carousel]
-          example: reel
+          description: Formato do conteúdo
+          enum: [carousel, reel, story, post]
         theme:
           type: string
-          example: Tutorial de culinária
+          description: Tema do post
         hook:
           type: string
-          example: Você sabia que...
+          description: Gancho viral do post
         cta:
           type: string
-          example: Me segue para mais conteúdo
+          description: Call-to-action
         status:
           type: string
+          description: Status do post
           enum: [planned, published, cancelled]
-          example: planned
-        created_at:
+        createdAt:
           type: string
+          description: Data de criação
           format: date-time
-          example: 2025-10-23T18:00:00Z
-        updated_at:
+        updatedAt:
           type: string
+          description: Data da última atualização
           format: date-time
-          example: 2025-10-23T18:00:00Z
-      required:
-        - id
-        - date
-        - format
-        - theme
-
-    PostInput:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-          example: 2025-10-23
-        week_number:
-          type: integer
-          example: 1
-        format:
-          type: string
-          enum: [reel, post, story, carousel]
-          example: reel
-        theme:
-          type: string
-          example: Tutorial de culinária
-        hook:
-          type: string
-          example: Você sabia que...
-        cta:
-          type: string
-          example: Me segue para mais conteúdo
-        status:
-          type: string
-          enum: [planned, published, cancelled]
-          default: planned
-          example: planned
-      required:
-        - date
-        - format
-        - theme
-
+      required: [date, format, theme]
     Alert:
       type: object
       properties:
         id:
-          type: integer
-          example: 1
+          type: string
+          description: ID único do alerta
+          format: uuid
         type:
           type: string
-          enum: [ctr_low, cpc_high, cpm_high, frequency_high, cost_per_follower_high]
-          example: ctr_low
+          description: Tipo do alerta
         message:
           type: string
-          example: CTR abaixo do esperado
-        threshold_value:
+          description: Mensagem do alerta
+        thresholdValue:
           type: number
+          description: Valor limite
           format: float
-          example: 1.5
-        actual_value:
+        actualValue:
           type: number
+          description: Valor atual
           format: float
-          example: 1.2
         date:
           type: string
+          description: Data do alerta
           format: date
-          example: 2025-10-23
-        sent_at:
+        sentAt:
           type: string
+          description: Data de envio
           format: date-time
-          example: 2025-10-23T18:00:00Z
-        created_at:
+        createdAt:
           type: string
+          description: Data de criação
           format: date-time
-          example: 2025-10-23T18:00:00Z
-      required:
-        - id
-        - type
-        - message
-        - date
-
-    AlertInput:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [ctr_low, cpc_high, cpm_high, frequency_high, cost_per_follower_high]
-          example: ctr_low
-        message:
-          type: string
-          example: CTR abaixo do esperado
-        threshold_value:
-          type: number
-          format: float
-          example: 1.5
-        actual_value:
-          type: number
-          format: float
-          example: 1.2
-        date:
-          type: string
-          format: date
-          example: 2025-10-23
-      required:
-        - type
-        - message
-        - date
-
-    AlertConfig:
-      type: object
-      properties:
-        ctr_min:
-          type: number
-          format: float
-          description: CTR mínimo para alerta
-          example: 1.5
-        cpc_max:
-          type: number
-          format: float
-          description: CPC máximo para alerta
-          example: 0.70
-        cpm_max:
-          type: number
-          format: float
-          description: CPM máximo para alerta
-          example: 10.0
-        frequency_max:
-          type: number
-          format: float
-          description: Frequência máxima para alerta
-          example: 3.0
-        cost_per_follower_max:
-          type: number
-          format: float
-          description: Custo por seguidor máximo para alerta
-          example: 1.30
-        enabled:
-          type: boolean
-          description: Se alertas estão habilitados
-          example: true
-        whatsapp_number:
-          type: string
-          description: Número do WhatsApp para alertas
-          example: +5531993676989
-
+      required: [type, message, date]
     Hook:
       type: object
       properties:
         id:
-          type: integer
-          example: 1
+          type: string
+          description: ID único do gancho
+          format: uuid
         title:
           type: string
-          example: Pergunta Engajante
+          description: Título do gancho
         content:
           type: string
-          example: Qual sua opinião sobre...
+          description: Conteúdo do gancho
         category:
           type: string
-          enum: [engagement, curiosity, urgency, social_proof, humor, controversy]
-          example: engagement
-        usage_count:
+          description: Categoria do gancho
+        usageCount:
           type: integer
+          description: Número de usos
           minimum: 0
-          example: 15
-        created_at:
+        createdAt:
           type: string
+          description: Data de criação
           format: date-time
-          example: 2025-10-23T18:00:00Z
-        updated_at:
+        updatedAt:
           type: string
+          description: Data da última atualização
           format: date-time
-          example: 2025-10-23T18:00:00Z
-      required:
-        - id
-        - title
-        - content
-        - category
-
-    HookInput:
-      type: object
-      properties:
-        title:
-          type: string
-          example: Pergunta Engajante
-        content:
-          type: string
-          example: Qual sua opinião sobre...
-        category:
-          type: string
-          enum: [engagement, curiosity, urgency, social_proof, humor, controversy]
-          example: engagement
-      required:
-        - title
-        - content
-        - category
-
-    Config:
-      type: object
-      properties:
-        key:
-          type: string
-          example: site_name
-        value:
-          type: string
-          example: Dashboard Sabrina Costa
-        description:
-          type: string
-          example: Nome do site
-        updated_at:
-          type: string
-          format: date-time
-          example: 2025-10-23T18:00:00Z
-      required:
-        - key
-        - value
-
-    Pagination:
-      type: object
-      properties:
-        page:
-          type: integer
-          example: 1
-        limit:
-          type: integer
-          example: 10
-        total:
-          type: integer
-          example: 150
-        pages:
-          type: integer
-          example: 15
-        hasNext:
-          type: boolean
-          example: true
-        hasPrev:
-          type: boolean
-          example: false
-
+      required: [title, content, category]
     Error:
       type: object
       properties:
-        success:
-          type: boolean
-          example: false
-        error:
+        message:
           type: string
-          example: Recurso não encontrado
+          description: Mensagem de erro
         code:
           type: string
-          example: RESOURCE_NOT_FOUND
-      required:
-        - success
-        - error
-
-    ValidationError:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: string
-          example: Dados inválidos
+          description: Código do erro
         details:
           type: object
-          properties:
-            field:
-              type: string
-              example: ctr
-            value:
-              type: string
-              example: 150.5
-            message:
-              type: string
-              example: CTR deve estar entre 0 e 100
-      required:
-        - success
-        - error
-
-tags:
-  - name: Autenticação
-    description: Endpoints para autenticação e gerenciamento de usuários
-  - name: Métricas
-    description: Endpoints para gerenciamento de métricas do Instagram
-  - name: Cronograma
-    description: Endpoints para gerenciamento do cronograma de posts
-  - name: Alertas
-    description: Endpoints para sistema de alertas e notificações
-  - name: Ganchos Virais
-    description: Endpoints para gerenciamento de ganchos virais
-  - name: Webhooks
-    description: Endpoints para integração com n8n e automações
-  - name: Configurações
-    description: Endpoints para configurações do sistema
+          description: Detalhes adicionais do erro
+      required: [message]
+    Success:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensagem de sucesso
+        data:
+          type: object
+          description: Dados retornados
+      required: [message]
+paths:
+  {}

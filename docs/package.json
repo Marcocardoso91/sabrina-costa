@@ -8,16 +8,16 @@
     "docs:serve": "python -m http.server 8080",
     "docs:build": "npm run docs:generate",
     "docs:watch": "nodemon scripts/generate-api-docs.js",
-    "docs:validate": "swagger-codegen validate -i api/openapi.yaml",
+    "docs:validate": "swagger-cli validate api/openapi.yaml",
     "docs:deploy": "npm run docs:build && echo 'Documentação pronta para deploy'",
-    "install:docs": "npm install swagger-jsdoc swagger-codegen-cli nodemon --save-dev",
+    "install:docs": "npm install swagger-jsdoc swagger-cli nodemon husky --save-dev",
     "setup:docs": "npm run install:docs && npm run docs:generate",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "changelog:version": "npm run changelog && git add CHANGELOG.md",
     "changelog:generate": "node scripts/generate-changelog.js",
     "changelog:setup": "node scripts/setup-changelog.js",
     "commit": "git-cz",
-    "prepare": "husky install",
+    "prepare": "if [ -d ../.git ] && [ -x ./node_modules/.bin/husky ]; then (cd .. && ./docs/node_modules/.bin/husky install docs/.husky); elif [ -d .git ] && [ -x ./node_modules/.bin/husky ]; then ./node_modules/.bin/husky install; fi",
     "lint-staged": "lint-staged",
     "version:setup": "node scripts/setup-versioning.js",
     "version:create": "node scripts/create-version.js",
@@ -38,8 +38,9 @@
   "license": "MIT",
   "devDependencies": {
     "swagger-jsdoc": "^6.2.8",
-    "swagger-codegen-cli": "^3.0.0",
-    "nodemon": "^3.0.1"
+    "swagger-cli": "^4.0.4",
+    "nodemon": "^3.0.1",
+    "husky": "^8.0.3"
   },
   "engines": {
     "node": ">=16.0.0",

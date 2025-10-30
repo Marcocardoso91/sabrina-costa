@@ -180,8 +180,8 @@ ON CONFLICT (key) DO NOTHING;
 -- Hash gerado com: bcrypt.hashSync('Sabrina2025!', 10)
 -- =====================================================
 INSERT INTO users (email, password_hash, name, role) VALUES
-('gerente@macspark.dev', '$2a$10$X8B9.vJY7kZGQxN4Y3Qe4eF6J2K8L9M0N1O2P3Q4R5S6T7U8V9W0X', 'Marco', 'admin'),
-('sabrina@example.com', '$2a$10$Y9C0.wKZ8lAHRyO5Z4Rf5fG7K3L9M0N1O2P3Q4R5S6T7U8V9W0X1Y', 'Sabrina', 'viewer')
+('gerente@macspark.dev', '$2a$10$LaIQpqCuEs/jqVPVNCYiXe2O.Ebr3A15jlTSBdgTLRgZdoarE19u.', 'Marco', 'admin'),
+('sabrina@example.com', '$2a$10$LaIQpqCuEs/jqVPVNCYiXe2O.Ebr3A15jlTSBdgTLRgZdoarE19u.', 'Sabrina', 'viewer')
 ON CONFLICT (email) DO NOTHING;
 
 -- =====================================================
