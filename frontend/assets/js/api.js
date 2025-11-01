@@ -124,6 +124,12 @@ const api = new APIClient(API_CONFIG);
 
 // API Endpoints
 const API = {
+    // Generic helpers (used by pages that call API.get/post/put/delete diretamente)
+    get: (...args) => api.get(...args),
+    post: (...args) => api.post(...args),
+    put: (...args) => api.put(...args),
+    delete: (...args) => api.delete(...args),
+
     // Authentication
     auth: {
         login: (email, password) => api.post('/auth/login', { email, password }),
@@ -164,6 +170,28 @@ const API = {
     config: {
         getAll: () => api.get('/config'),
         update: (data) => api.put('/config', data)
+    },
+
+    // Automations (workflows N8N)
+    automations: {
+        list: () => api.get('/automations'),
+        get: (workflowName) => api.get(`/automations/${workflowName}`),
+        toggle: (workflowName, payload) => api.put(`/automations/${workflowName}/toggle`, payload),
+        changeMode: (workflowName, payload) => api.put(`/automations/${workflowName}/mode`, payload),
+        killSwitch: () => api.post('/automations/kill-switch'),
+        pendingApprovals: () => api.get('/automations/pending-approvals/list'),
+        approvalsHistory: (params) => api.get('/automations/approvals/history', params),
+        approve: (id) => api.post(`/automations/approve/${id}`),
+        reject: (id, payload) => api.post(`/automations/reject/${id}`, payload),
+        stats: () => api.get('/automations/stats/overview')
+    },
+
+    // IA Costs
+    aiCosts: {
+        currentMonth: () => api.get('/ai-costs/current-month'),
+        byService: (params) => api.get('/ai-costs/by-service', params),
+        forecast: () => api.get('/ai-costs/forecast'),
+        thresholds: () => api.get('/ai-costs/alerts')
     }
 };
 

@@ -1,455 +1,701 @@
-<!-- e24a4eb6-1b9a-4321-922e-5d586e1a155f 7aa017d1-90f1-4502-962b-2c317258fd4d -->
-# Plano: Implementar 11 Workflows N8N com IA
+<!-- e24a4eb6-1b9a-4321-922e-5d586e1a155f 4f247e0a-93f3-46a3-b5aa-8e2d7105f668 -->
+# Plano: Workflows N8N com IA - Controle Total e Segurança
 
-## Análise dos Documentos
+## Princípios de Segurança (INVIOLÁVEIS)
 
-Baseado nos 3 arquivos:
+1. NUNCA postar automaticamente no Instagram
+2. NUNCA pausar campanhas sem sua aprovação
+3. SEMPRE modo manual por padrão (toggle auto desligado)
+4. SEMPRE pedir aprovação antes de qualquer ação
+5. SEMPRE controlar custos IA (max R$ 50/mês, priorizar gratuitos)
+6. SEMPRE notificar mudanças via WhatsApp + Markdown diff
 
-1. `plano-sabrina-blogueira-fases-1-4.md` - Estratégia de crescimento (4 fases)
-2. `prd-tecnico-v2-detalhado.md` - 11 workflows n8n detalhados
-3. `memoria-master-consolidada-v3.md` - Contexto completo + credenciais
+## Fase 0: Sistema de Controle e Proteções (CRÍTICO - FAZER PRIMEIRO)
 
-## Gap Analysis
+### 0.1 Criar Tabelas de Controle
 
-### Já Implementado (Dashboard Atual)
+Adicionar em `backend/db/schema.sql`:
 
-- Backend com 8 APIs REST
-- Frontend com 7 páginas
-- 4 workflows n8n básicos (métricas, alertas, relatórios, lembretes)
-- Schema SQL completo
-- Autenticação JWT
+**automation_controls** - Controle de workflows
 
-### Falta Implementar (dos documentos)
+**approval_queue** - Fila de aprovações
 
-- 7 workflows n8n avançados com IA
-- Integração OpenAI/Claude para geração de conteúdo
-- Otimização automática de campanhas Meta Ads
-- Análise preditiva de métricas
-- Sistema de recomendações de conteúdo
-- Dashboard de crescimento Reels Fund
-- Alertas inteligentes contextuais
+**ai_usage_tracking** - Rastreamento custos IA
 
-## Fase 1: Análise e Planejamento
+**weekly_plan_updates** - Mudanças no plano
 
-### 1.1 Mapear workflows existentes vs necessários
+### 0.2 Criar APIs de Controle
 
-Comparar:
+**backend/api/automations.js:**
 
-- `n8n/workflows/production/` (4 workflows atuais)
-- vs `prd-tecnico-v2-detalhado.md` (11 workflows desejados)
+- GET /automations - Status todos workflows
+- PUT /automations/:id/toggle - Ativar/desativar
+- PUT /automations/:id/mode - Mudar modo (manual/auto)
+- GET /automations/pending - Aprovações pendentes
+- POST /automations/approve/:id - Aprovar ação
+- POST /automations/reject/:id - Rejeitar ação
 
-Identificar:
+**backend/api/ai-costs.js:**
 
-- Quais dos 4 atuais podem ser expandidos
-- Quais 7 novos precisam ser criados
-- Dependências e integrações necessárias
+- GET /ai-costs/current - Gasto mês (R$ X / R$ 50)
+- GET /ai-costs/forecast - Estimativa semana
+- POST /ai-costs/log - Registrar uso
+- GET /ai-costs/alerts - Verificar thresholds
 
-### 1.2 Validar credenciais e APIs necessárias
+### 0.3 Frontend: configuracoes-automacao.html
 
-Verificar em `memoria-master-consolidada-v3.md`:
+**Painel de Controle com:**
 
-- Evolution API (WhatsApp) - já configurado
-- OpenAI API - precisa configurar
-- Claude API - precisa configurar
-- Meta Ads API - precisa configurar
-- Google Sheets API - precisa configurar
-- Supabase - já configurado
+- Status de cada workflow (ON/OFF visual)
+- Modo atual (Manual/Semi-Auto/Auto)
+- Toggle individual por workflow
+- KILL SWITCH MASTER (botão vermelho grande)
+- Aprovações pendentes (lista com aprovar/rejeitar)
+- Histórico de ações (últimas 50)
+- Monitor custos IA (gauge visual: R$ X / R$ 50)
 
-### 1.3 Estimar escopo e priorizar
+### 0.4 Criar docs/automations/master-plan.md
 
-Priorização baseada em ROI:
+**Arquivo mestre versionado com:**
 
-1. Otimização automática campanhas (maior economia R$)
-2. Geração de conteúdo IA (economiza tempo)
-3. Alertas inteligentes (previne erros)
-4. Dashboard Reels Fund (meta principal)
-5. Análise preditiva (insights)
+- Lista completa de 11 workflows
+- Status de cada um (ativo/inativo/modo)
+- Como ativar/desativar cada um
+- Instruções de segurança
+- Changelog (IA atualiza semanalmente)
 
-## Fase 2: Preparação Backend
+### 0.5 Criar docs/automations/MANUAL-AUTOMACOES.md
 
-### 2.1 Adicionar novos endpoints API
+**Manual detalhado:**
 
-Criar em `backend/api/`:
+- Descrição de cada automação
+- Como funciona (fluxo completo)
+- Níveis de automação (manual/semi/auto)
+- Como ativar via frontend
+- Como ativar via WhatsApp
+- Como desativar (kill switch)
+- Comandos WhatsApp disponíveis
+- Troubleshooting
+- FAQ sobre segurança
 
-- `campaigns.js` - CRUD campanhas Meta Ads
-- `content.js` - Conteúdo gerado (legendas, dicas)
-- `predictions.js` - Análises preditivas
-- `recommendations.js` - Recomendações IA
-- `reelsfund.js` - Progresso meta 900 seguidores
+### 0.6 Criar docs/automations/SEGURANCA-INSTAGRAM.md
 
-### 2.2 Estender schema SQL
+**Guia de segurança:**
 
-Adicionar tabelas em `backend/db/schema.sql`:
+- O que é seguro automatizar (métricas, leitura)
+- O que NUNCA automatizar (postar, deletar)
+- Políticas Instagram sobre bots
+- Rate limits e como respeitamos
+- Como evitar ban
+- Checklist de segurança antes de ativar workflow
 
-- `campaigns` - Campanhas Meta Ads
-- `content_generated` - Conteúdo IA
-- `predictions` - Previsões e análises
-- `recommendations` - Recomendações sistema
-- `reels_fund_progress` - Tracking meta
+## Fase 1: Workflows IA com Aprovação Obrigatória
 
-### 2.3 Configurar variáveis ambiente
+### Workflow 05: Otimização Campanhas (MODO: Apenas Notificar)
 
-Adicionar em `backend/ENV_SETUP.md`:
+**Configuração inicial:**
 
-- OPENAI_API_KEY
-- CLAUDE_API_KEY (Anthropic)
-- META_ADS_ACCESS_TOKEN
-- META_ADS_APP_ID
-- META_ADS_APP_SECRET
-- GOOGLE_SHEETS_API_KEY
-
-## Fase 3: Implementar Workflows N8N
-
-### Workflow 05: Otimização Automática de Campanhas
-
-**Trigger:** Cron (a cada 2 horas)
-
-**Função:**
-
-1. Buscar campanhas ativas Meta Ads API
-2. Analisar performance (CTR, CPC, CPS)
-3. Decisão automática:
-
-- CTR < 2% → Pausar campanha
-- CTR > 4% → Aumentar budget 20%
-- CPC > R$ 1.00 → Ajustar targeting
-
-4. Aplicar mudanças via API
-5. Notificar Marco via WhatsApp
-
-**Arquivo:** `n8n/workflows/production/05-otimizar-campanhas.json`
-
-**Dependências:**
-
-- Meta Ads API credentials
-- Thresholds configuráveis
-- Evolution API (WhatsApp)
-
-### Workflow 06: Geração de Legendas com IA
-
-**Trigger:** Webhook (Sabrina envia tema)
-
-**Função:**
-
-1. Receber tema do post
-2. Consultar OpenAI GPT-4:
-
-- Prompt: "Gere legenda autêntica para Instagram sobre [tema]"
-- Tom: Leve, próximo, empoderador
-- Inclui: 3-5 hashtags + CTA + emojis
-
-3. Salvar em `content_generated`
-4. Enviar para Sabrina via WhatsApp
-5. (Opcional) Postar via Instagram API
-
-**Arquivo:** `n8n/workflows/production/06-gerar-legendas-ia.json`
-
-**Dependências:**
-
-- OpenAI API
-- Banco dados (salvar histórico)
-- WhatsApp
-
-### Workflow 07: Recomendações de Conteúdo IA
-
-**Trigger:** Cron (diário 08:00)
-
-**Função:**
-
-1. Analisar últimos 30 posts (engagement)
-2. Analisar tendências Instagram (hashtags, tópicos)
-3. Claude API:
-
-- Prompt: "Baseado nestes dados, recomende 5 temas para Sabrina"
-- Contexto: Persona, pilares de conteúdo
-
-4. Salvar recomendações
-5. Enviar para Sabrina via WhatsApp
-
-**Arquivo:** `n8n/workflows/production/07-recomendar-conteudo-ia.json`
-
-### Workflow 08: Análise Preditiva de Métricas
-
-**Trigger:** Cron (diário 19:00)
-
-**Função:**
-
-1. Buscar últimos 30 dias de métricas
-2. Calcular tendências (CTR, CPC, crescimento)
-3. IA predict próximos 7 dias
-4. Identificar riscos (ex: "CPC vai aumentar 15%")
-5. Gerar alertas preventivos
-6. Enviar relatório preditivo
-
-**Arquivo:** `n8n/workflows/production/08-analise-preditiva.json`
-
-### Workflow 09: Dashboard Reels Fund Progress
-
-**Trigger:** Cron (a cada 6 horas)
-
-**Função:**
-
-1. Consultar Instagram API (followers count)
-2. Calcular progresso meta 900
-3. Estimar ETA (dias restantes)
-4. Atualizar `reels_fund_progress` table
-5. Se > 900: 🎉 Notificar sucesso!
-6. Dashboard mostra: 880/900 (97.7%) - ETA: 18 dias
-
-**Arquivo:** `n8n/workflows/production/09-reels-fund-tracker.json`
-
-**Dependências:**
-
-- Instagram Graph API (ou scraping)
-- Cálculos de tendência
-
-### Workflow 10: Geração de Dicas de Produtos IA
-
-**Trigger:** Webhook (Sabrina envia foto produto)
-
-**Função:**
-
-1. Receber imagem produto
-2. OpenAI Vision API:
-
-- Identificar produto
-- Gerar 3-5 dicas de uso
-- Tom: Honesto, testado por você
-
-3. Formatar para Stories
-4. Enviar para Sabrina
-
-**Arquivo:** `n8n/workflows/production/10-dicas-produtos-ia.json`
-
-### Workflow 11: Análise de Comentários (Sentiment)
-
-**Trigger:** Cron (diário 20:00)
-
-**Função:**
-
-1. Buscar comentários últimos posts
-2. IA sentiment analysis:
-
-- Positivos/Negativos/Neutros
-- Temas recorrentes
-- Perguntas frequentes
-
-3. Gerar insights
-4. Sugerir temas para próximos posts
-
-**Arquivo:** `n8n/workflows/production/11-analise-comentarios.json`
-
-### Workflow 12-15: Extras (Backlog)
-
-- Workflow 12: Backup automático Google Drive
-- Workflow 13: Sync Google Sheets bidirecional
-- Workflow 14: Competitor analysis (scraping)
-- Workflow 15: A/B testing automático
-
-## Fase 4: Estender Frontend
-
-### 4.1 Nova página: Campanhas Meta Ads
-
-**Arquivo:** `frontend/campanhas.html`
-
-**Features:**
-
-- Listar campanhas ativas
-- Status (ativa/pausada/otimizada)
-- Métricas por campanha (CTR, CPC, gasto)
-- Botões: pausar/ativar manual
-- Gráfico de performance
-- Histórico de otimizações automáticas
-
-### 4.2 Nova página: Conteúdo IA
-
-**Arquivo:** `frontend/conteudo-ia.html`
-
-**Features:**
-
-- Histórico de legendas geradas
-- Botão "Gerar nova legenda"
-- Recomendações de temas (IA)
-- Dicas de produtos geradas
-- Copy to clipboard
-
-### 4.3 Expandir Dashboard
-
-**Arquivo:** `frontend/dashboard.html` (adicionar)
-
-**Features:**
-
-- Card "Progresso Reels Fund" (880/900 - 97.7%)
-- Card "Previsão 7 dias" (análise preditiva)
-- Card "Campanhas ativas" (resumo)
-- Widget "Recomendações IA"
-
-### 4.4 Nova página: Análises IA
-
-**Arquivo:** `frontend/analises-ia.html`
-
-**Features:**
-
-- Análise preditiva (gráficos)
-- Sentiment analysis comentários
-- Tendências identificadas
-- Insights acionáveis
-
-## Fase 5: Integrações Externas
-
-### 5.1 Meta Ads API
-
-**Setup:**
-
-- Criar Meta App em developers.facebook.com
-- Obter access token
-- Configurar permissions (ads_read, ads_management)
-- Testar API calls
-
-**Endpoints necessários:**
-
-- GET /campaigns - Listar campanhas
-- GET /adsets - Listar ad sets
-- GET /ads - Listar ads
-- POST /campaigns/{id} - Pausar/ativar
-- PATCH /campaigns/{id} - Atualizar budget
-
-### 5.2 OpenAI API
-
-**Setup:**
-
-- Criar conta OpenAI
-- Gerar API key
-- Configurar billing
-- Testar GPT-4 e Vision API
-
-**Modelos:**
-
-- GPT-4 - Legendas, recomendações
-- GPT-4 Vision - Análise de imagens produtos
-- Whisper - Transcrição vídeos (futuro)
-
-### 5.3 Claude API (Anthropic)
-
-**Setup:**
-
-- Criar conta Anthropic
-- Gerar API key
-- Testar Claude 3.5 Sonnet
-
-**Uso:**
-
-- Análises mais profundas
-- Recomendações de conteúdo
-- Sentiment analysis
-
-### 5.4 Instagram Graph API
-
-**Setup:**
-
-- Conectar conta Instagram Business
-- Obter long-lived access token
-- Permissions: instagram_basic, instagram_manage_insights
-
-**Endpoints:**
-
-- GET /{user-id} - Followers count
-- GET /{media-id}/comments - Comentários
-- GET /{user-id}/media - Posts recentes
-
-## Fase 6: Testing e Validação
-
-### 6.1 Testes workflows n8n
-
-Testar cada um dos 11 workflows:
-
-- Execução manual (botão play)
-- Validar inputs/outputs
-- Verificar error handling
-- Testar em ambiente dev primeiro
-
-### 6.2 Testes integrações
-
-- Meta Ads API → n8n → Backend
-- OpenAI → n8n → WhatsApp
-- Instagram API → Dashboard
-- Backend → Frontend (novos endpoints)
-
-### 6.3 Testes end-to-end
-
-Fluxos completos:
-
-1. Campanha underperforming → Auto-pausar → Notificar
-2. Tema enviado → IA gerar legenda → Receber WhatsApp
-3. 900 followers atingido → Celebração → Dashboard atualizado
-
-## Fase 7: Documentação
-
-### 7.1 Atualizar docs
-
-- README.md - Mencionar 11 workflows IA
-- n8n/README.md - Documentar novos workflows
-- backend/README.md - Novos endpoints
-- frontend/README.md - Novas páginas
-
-### 7.2 Criar guias
-
-- Como configurar Meta Ads API
-- Como configurar OpenAI
-- Como usar geração de legendas
-- Como interpretar análises preditivas
-
-## Estimativa
-
-### Tempo Total: 40-60 horas
-
-- Fase 1 (Análise): 4h
-- Fase 2 (Backend): 8h
-- Fase 3 (N8N workflows): 20h
-- Fase 4 (Frontend): 10h
-- Fase 5 (Integrações): 12h
-- Fase 6 (Testing): 4h
-- Fase 7 (Docs): 2h
-
-### Priorização
-
-**MVP (20h - 1 semana):**
-
-- Workflow 05: Otimização campanhas
-- Workflow 06: Legendas IA
-- Workflow 09: Reels Fund tracker
-- Frontend: Card Reels Fund no dashboard
-
-**Fase 2 (20h - 1 semana):**
-
-- Workflows 07, 08, 10, 11
-- Páginas frontend novas
-- Testes completos
-
-**Backlog:**
-
-- Workflows 12-15 extras
-- Mobile app
-- Advanced analytics
-
-## Questões para o Usuário
-
-Antes de começar a implementação, preciso saber:
-
-1. Você tem acesso às APIs necessárias?
-
-- Meta Ads API (access token)
-- OpenAI API (key + billing)
-- Claude API (key)
-- Instagram Graph API (token)
-
-2. Qual prioridade?
-
-- a) Implementar tudo (40-60h)
-- b) Apenas MVP (20h): Otimização + IA legendas + Reels Fund
-- c) Apenas workflows n8n (sem backend/frontend)
-
-3. Quer que eu comece agora ou prefere revisar o plano primeiro?
+- enabled: FALSE (desligado)
+- automation_mode: 'manual'
+- requires_approval: TRUE
+- auto_execute: FALSE (toggle desligado)
+
+**Fluxo SEGURO:**
+
+1. Cron (2h) verifica se enabled=TRUE (senão para aqui)
+2. Query Meta Ads API (apenas leitura)
+3. Analisar métricas:
+
+                                                                                                                                                                                                - CTR < 2%: Problema identificado
+                                                                                                                                                                                                - CPC > R$ 1.00: Problema identificado
+                                                                                                                                                                                                - CTR > 4%: Oportunidade identificada
+
+4. Para CADA problema/oportunidade:
+
+                                                                                                                                                                                                - Salvar em `approval_queue`:
+     ```json
+     {
+       "action_type": "suggest_pause_campaign",
+       "campaign_id": "123",
+       "reason": "CTR 1.5% (abaixo de 2%)",
+       "suggested_action": "Pausar campanha",
+       "impact": "Economia R$ 20/dia",
+       "data": {...}
+     }
+     ```
+
+                                                                                                                                                                                                - Enviar WhatsApp:
+     ```
+     🔔 SUGESTÃO - Campanha "Nome X"
+     
+     Problema: CTR 1.5% (meta: >2%)
+     Sugestão: Pausar campanha
+     Impacto: Economia ~R$ 20/dia
+     
+     Aprovar?
+     ✅ /aprovar-camp-123
+     ❌ /rejeitar-camp-123
+     📊 /detalhes-camp-123
+     
+     Expira em: 24h
+     ```
+
+
+5. NÃO EXECUTA NADA (aguarda aprovação)
+6. Se você enviar `/aprovar-camp-123`:
+
+                                                                                                                                                                                                - Marca approval_queue como approved
+                                                                                                                                                                                                - Workflow executa ação via Meta Ads API
+                                                                                                                                                                                                - Notifica: "✅ Campanha pausada com sucesso"
+
+7. Se você enviar `/rejeitar-camp-123`:
+
+                                                                                                                                                                                                - Marca como rejected
+                                                                                                                                                                                                - Não faz nada
+                                                                                                                                                                                                - Notifica: "Sugestão rejeitada"
+
+**Futuro (quando ativar auto_execute=TRUE):**
+
+- Adiciona kill switch
+- Executa mas permite reverter em 1h
+- Notifica ANTES e DEPOIS
+
+### Workflow 06: Gerar Legendas IA (MODO: Aprovação Obrigatória)
+
+**Configuração:**
+
+- enabled: FALSE inicialmente
+- requires_approval: TRUE (sempre)
+- never_post: TRUE (proteção Instagram)
+
+**Fluxo SEGURO:**
+
+1. Trigger: Você envia "/legenda Tema X" via WhatsApp
+2. Priorizar IA gratuita:
+
+                                                                                                                                                                                                - 1º: Gemini Pro (Google - já assinado, grátis)
+                                                                                                                                                                                                - 2º: ChatGPT Pro (já assinado via plano)
+                                                                                                                                                                                                - 3º: Claude Pro (já assinado)
+                                                                                                                                                                                                - 4º: Llama 3.1 na VPS (se disponível)
+
+3. Gerar legenda:
+   ```
+   Prompt: Você é Sabrina Costa. Gere legenda Instagram autêntica sobre [tema].
+   Tom: Leve, próximo, como amiga falando.
+   Formato: 150-200 chars + 3-5 hashtags + CTA sutil + 2-3 emojis
+   Persona: [dados de memoria-master-consolidada-v3.md]
+   ```
+
+4. Registrar custo:
+
+                                                                                                                                                                                                - Se usou API paga: Log em `ai_usage_tracking`
+                                                                                                                                                                                                - Calcular: tokens * preço = R$ X
+                                                                                                                                                                                                - Verificar budget (não ultrapassou?)
+
+5. Salvar em `content_generated`:
+   ```json
+   {
+     "type": "legenda",
+     "theme": "Tema X",
+     "content": "[legenda gerada]",
+     "status": "pending_approval",
+     "ai_service": "gemini",
+     "cost_brl": 0.00
+   }
+   ```
+
+6. Enviar WhatsApp:
+   ```
+   ✨ Legenda gerada para "Tema X":
+   
+   ---
+   [legenda completa com hashtags e CTA]
+   ---
+   
+   O que fazer?
+   ✅ /aprovar-leg-456 (salva como aprovada, você copia e posta)
+   ✏️ /editar-leg-456 (envie nova versão)
+   ❌ /rejeitar-leg-456 (descarta)
+   🔄 /regerar-leg-456 (tenta novamente)
+   ```
+
+7. NUNCA posta automaticamente
+8. Se aprovar: Status=approved, você copia manualmente para Instagram
+
+**Segurança Instagram:**
+
+- ✅ ZERO integração com Instagram API para posts
+- ✅ Apenas gera texto
+- ✅ Você controla 100% da postagem
+
+### Workflow 09: Reels Fund Tracker (AUTO SEGURO)
+
+**Configuração:**
+
+- enabled: TRUE
+- automation_mode: 'auto'
+- requires_approval: FALSE (seguro - apenas leitura)
+
+**Fluxo SEGURO:**
+
+1. Cron (6h) - ler followers count
+2. Métodos SEGUROS (sem risco):
+
+                                                                                                                                                                                                - Método 1: Instagram Graph API (apenas GET /me?fields=followers_count)
+                                                                                                                                                                                                - Método 2: Scraping público (Apify Instagram Profile Scraper)
+                                                                                                                                                                                                - Método 3: Update manual via `/api/reelsfund/update`
+
+3. Calcular:
+
+                                                                                                                                                                                                - Atual: 880, Meta: 900, Faltam: 20
+                                                                                                                                                                                                - Taxa crescimento: +2.5/dia (média 7 dias)
+                                                                                                                                                                                                - ETA: 8 dias (20 / 2.5)
+
+4. Salvar em `reels_fund_progress`
+5. Se atingiu 900:
+   ```
+   🎉🎉🎉 PARABÉNS SABRINA!
+   
+   Meta Reels Fund ATINGIDA!
+   Seguidores: 901
+   
+   Próximos passos:
+   1. Ativar Reels Fund no Instagram
+   2. Começar monetização
+   3. [instruções]
+   ```
+
+6. Atualizar dashboard (card automático)
+
+**Segurança:**
+
+- ✅ Apenas leitura
+- ✅ Não interage com conta
+- ✅ Zero risco de ban
+
+### Workflow 12: Busca Semanal Validação Plano (AUTO)
+
+**Configuração:**
+
+- enabled: TRUE
+- cron: Segunda 09:00
+- uses_ai: TRUE (Claude)
+
+**Fluxo completo (busca profunda):**
+
+1. Exa Search MCP ou Perplexity:
+   ```
+   - "Instagram algorithm update 2025 last 7 days"
+   - "Instagram reels monetization changes 2025"
+   - "Meta Ads policy updates últimos 7 dias"
+   - "Instagram marketing trends novembro 2025"
+   - "Influencer tools new features 2025"
+   - "Instagram engagement best practices 2025"
+   ```
+
+2. Claude 3.5 Sonnet (já assinado):
+   ```
+   Prompt: Você é consultor de marketing Instagram.
+   
+   Contexto:
+   - Cliente: Sabrina Costa (880 followers, meta 900)
+   - Plano atual: [ler docs/automations/master-plan.md]
+   
+   Descobertas da semana: [resultados busca]
+   
+   Analise:
+   1. Alguma mudança afeta nosso plano? (sim/não)
+   2. Quais mudanças são relevantes?
+   3. Ações recomendadas (se aplicável)
+   4. Urgência (baixa/média/alta)
+   5. Impacto em metas (positivo/negativo/neutro)
+   
+   Formato: Markdown estruturado
+   ```
+
+3. Se mudanças relevantes detectadas:
+
+                                                                                                                                                                                                - Atualizar `docs/automations/master-plan.md`:
+     ```markdown
+     ## Changelog
+     
+     ### Semana 01/11/2025
+     **Mudanças detectadas:** [resumo]
+     **Urgência:** Média
+     **Ações:**
+     - [ação 1]
+     - [ação 2]
+     ```
+
+                                                                                                                                                                                                - Gerar diff (comparar versão anterior)
+                                                                                                                                                                                                - Enviar WhatsApp:
+     ```
+     📢 ATUALIZAÇÃO SEMANAL DO PLANO
+     
+     Descobertas da semana:
+     ✅ Instagram mudou algoritmo Reels (prioriza <30s)
+     ⚠️ Meta Ads aumentou CPC médio 15%
+     
+     Impacto no nosso plano: MÉDIO
+     Urgência: BAIXA
+     
+     Recomendações:
+     1. Ajustar Reels para <30s (maior alcance)
+     2. Revisar budget campanhas (CPC pode subir)
+     
+     Ver detalhes completos:
+     docs/automations/master-plan.md (atualizado)
+     
+     Diff: [link ou anexo markdown]
+     ```
+
+
+4. Se nenhuma mudança: "✅ Plano validado. Sem mudanças esta semana."
+5. Registrar custo Claude API em `ai_usage_tracking`
+
+**Segurança:**
+
+- ✅ Apenas informa, não muda workflows ativos
+- ✅ Você decide se aplica recomendações
+- ✅ Usa Claude Pro (já assinado, custo R$ 0)
+
+### Workflow 13: Monitor Custos IA (AUTO)
+
+**Fluxo de proteção financeira:**
+
+1. Trigger: 
+
+                                                                                                                                                                                                - Cron (diário 08:00)
+                                                                                                                                                                                                - ANTES de cada chamada IA (pre-check)
+
+2. Query `ai_usage_tracking` do mês atual
+3. Calcular:
+   ```javascript
+   const gastoTotal = soma(custo_openai + custo_claude + custo_gemini + custo_outros);
+   const budgetMensal = 50.00;
+   const percentual = (gastoTotal / budgetMensal) * 100;
+   
+   // Projeção próxima semana
+   const mediaDiaria = gastoTotal / diaDoMes;
+   const diasRestantes = 30 - diaDoMes;
+   const projecaoMes = gastoTotal + (mediaDiaria * diasRestantes);
+   ```
+
+4. Verificar thresholds:
+
+                                                                                                                                                                                                - **50% (R$ 25):** 
+     ```
+     🟡 ALERTA: Budget IA em 50%
+     Gasto: R$ 25.00 / R$ 50.00
+     Projeção mês: R$ 42.00 (OK)
+     Continuar? Tudo normal.
+     ```
+
+                                                                                                                                                                                                - **75% (R$ 37.50):**
+     ```
+     🟠 ATENÇÃO: Budget IA em 75%
+     Gasto: R$ 37.50 / R$ 50.00
+     Projeção: R$ 52.00 (ALERTA - pode ultrapassar!)
+     
+     Recomendação: Priorizar apenas Gemini/ChatGPT gratuitos
+     ```
+
+                                                                                                                                                                                                - **90% (R$ 45):**
+     ```
+     🔴 LIMITE CRÍTICO: Budget IA em 90%!
+     
+     PAUSANDO AUTOMATICAMENTE:
+     ❌ Gerar Legendas (custo variável)
+     ❌ Análise Preditiva
+     ❌ Recomendar Conteúdo
+     
+     Mantendo ativos (custo zero):
+     ✅ Reels Fund Tracker (grátis)
+     ✅ Busca Semanal (Claude Pro já pago)
+     ✅ Monitor Custos
+     
+     Decidir:
+     /aumentar-budget [valor]
+     /manter-pausado
+     /usar-apenas-gratuitos
+     ```
+
+
+5. Atualizar config se pausou workflows
+6. Registrar ação
+
+**Priorização de APIs (Custo Zero):**
+
+1. Gemini Pro (Google) - 60 req/min grátis
+2. ChatGPT Pro - ilimitado no plano
+3. Claude Pro - bom limite no plano
+4. Llama 3.1 na VPS - custo zero (se disponível)
+5. OpenAI API paga - APENAS se necessário
+
+**Estimativa realista:**
+
+- Gemini Pro: R$ 0 (grátis)
+- ChatGPT Pro: R$ 0 (já pago)
+- Claude Pro: R$ 0 (já pago)
+- OpenAI API (backup): ~R$ 2-5/mês
+- **Total: R$ 0-5/mês** (90% abaixo do limite)
+
+## Fase 1: Workflows Core (Semana 1)
+
+### 1.1 Workflow 06: Gerar Legendas (APROVAÇÃO OBRIGATÓRIA)
+
+**Trigger:** WhatsApp comando `/legenda {tema}`
+
+**Proteções:**
+
+- requires_approval: TRUE (sempre)
+- never_auto_post: TRUE (proteção Instagram)
+- use_free_ai_first: TRUE
+
+**Fluxo detalhado no plano acima**
+
+### 1.2 Workflow 09: Reels Fund (AUTO SEGURO)
+
+**Fluxo detalhado no plano acima**
+
+### 1.3 Sistema de Comandos WhatsApp
+
+Criar bot n8n para interpretar comandos:
+
+**Aprovação:**
+
+- `/aprovar-{id}`
+- `/rejeitar-{id}`
+- `/detalhes-{id}`
+
+**Controle:**
+
+- `/status` - Status de tudo
+- `/pausar-tudo` - Kill switch
+- `/custos` - Ver gastos IA
+- `/ativar-{workflow}` - Liga workflow
+- `/desativar-{workflow}` - Desliga
+
+**Conteúdo:**
+
+- `/legenda {tema}` - Gerar legenda
+- `/recomendar` - Pedir recomendações
+- `/dicas {produto}` - Gerar dicas
+
+## Fase 2: Estimativa Semanal de Custos
+
+### 2.1 Criar relatório semanal de projeção
+
+**Workflow adicional ou parte do Workflow 13:**
+
+Toda segunda 10:00:
+
+1. Calcular uso semana anterior
+2. Projetar próxima semana:
+   ```
+   📊 ESTIMATIVA CUSTOS IA - Semana 02-08/11
+   
+   Semana passada: R$ 1.20
+   Por serviço:
+   - Gemini Pro: R$ 0 (grátis) ✅
+   - ChatGPT Pro: R$ 0 (plano) ✅
+   - Claude API: R$ 1.20
+   
+   Projeção próxima semana: R$ 1.50
+   
+   Workflows que usam IA:
+   - Gerar Legendas: ~R$ 0.50 (2x/semana)
+   - Busca Semanal: R$ 0 (Claude Pro)
+   - Análise Preditiva: ~R$ 0.80 (7x/semana)
+   - Recomendar: ~R$ 0.20 (1x/semana)
+   
+   Total mês (projeção): R$ 6.00 / R$ 50.00 (12%)
+   Status: ✅ Muito abaixo do limite
+   
+   Tudo OK para continuar!
+   ```
+
+
+## Fase 3: Implementação Gradual
+
+### Sprint 1 (Semana 1): Fundação + Controles
+
+**20h de trabalho**
+
+Tarefas:
+
+- Criar 4 tabelas de controle (schema.sql)
+- Criar 2 APIs (automations.js, ai-costs.js)
+- Criar configuracoes-automacao.html
+- Criar 3 documentos (master-plan.md, MANUAL, SEGURANCA)
+- Workflow 13: Monitor Custos
+- Workflow 12: Busca Semanal (básico)
+- Sistema comandos WhatsApp (básico)
+
+**Testes Críticos do Kill Switch (DEDICADOS):**
+
+Criar `backend/__tests__/kill-switch.test.js`:
+- Teste 1: API /pausar-tudo desliga todos workflows
+- Teste 2: Comando WhatsApp /pausar-tudo desliga todos
+- Teste 3: Botão frontend desliga todos
+- Teste 4: Workflows pausados NÃO executam (verificar enabled=FALSE)
+- Teste 5: Notificação enviada confirmando pause
+- Teste 6: Tempo de resposta < 5 segundos
+- Teste 7: Religar workflows (/reativar-tudo)
+- Teste 8: Estado final consistente
+
+Criar `../scripts/test/test-kill-switch.js`:
+- Simula cenário emergência
+- Testa kill switch via 3 métodos (API, WhatsApp, Frontend)
+- Valida workflows realmente param
+- Testa rollback (religar seletivo)
+- Gera relatório de teste
+
+**Testes de Segurança:**
+- Teste de proteção Instagram (confirmar ZERO posts automáticos)
+- Teste de aprovação (nada executa sem OK)
+- Teste de custos (pause em 90%)
+
+**Entrega:** Sistema de controle completo + proteções TESTADAS e validadas
+
+### Sprint 2 (Semana 2): Workflows Seguros
+
+**24h de trabalho**
+
+Tarefas:
+
+- Workflow 09: Reels Fund Tracker
+- Workflow 06: Gerar Legendas (modo aprovação)
+- Workflow 05: Otimização Campanhas (modo notificar)
+- Configurar Gemini Pro API
+- Configurar Meta Ads API (readonly)
+- Sistema de aprovação WhatsApp completo
+- Página aprovacoes.html (frontend)
+- Testes end-to-end
+
+**Entrega:** 3 workflows IA funcionais com aprovação obrigatória
+
+### Sprint 3 (Opcional - Expansão)
+
+**20h de trabalho**
+
+- Workflow 07: Recomendar Conteúdo
+- Workflow 08: Análise Preditiva
+- Workflow 10: Dicas Produtos
+- Workflow 11: Análise Comentários
+- Refinamentos baseados em uso
+
+**Entrega:** 11 workflows completos
+
+## Documentação Crítica
+
+### MANUAL-AUTOMACOES.md
+
+Exemplo de seção:
+
+```markdown
+## Workflow 05: Otimização de Campanhas
+
+### O que faz
+Analisa campanhas Meta Ads a cada 2 horas e sugere otimizações (pausar underperformers, escalar winners).
+
+### Modos Disponíveis
+
+1. MANUAL (padrão, recomendado)
+   - Analisa e notifica
+   - NADA é feito automaticamente
+   - Você aprova cada ação
+
+2. SEMI-AUTO (futuro, com toggle)
+   - Executa ações aprovadas
+   - Kill switch disponível
+   - Rollback em 1h
+
+3. AUTO (desligado por padrão, NÃO recomendado)
+   - Executa automaticamente
+   - Notifica DEPOIS
+   - Risco médio
+
+### Como Ativar
+
+Via Frontend:
+1. Acessar configuracoes-automacao.html
+2. Encontrar "Otimização de Campanhas"
+3. Toggle ON (fica azul)
+4. Modo: Selecionar "Manual"
+5. Salvar
+
+Via WhatsApp:
+- Enviar: /ativar-otimizar-campanhas
+
+### Como Desativar
+
+Via Frontend:
+- Toggle OFF
+
+Via WhatsApp:
+- /desativar-otimizar-campanhas
+
+Via Kill Switch:
+- /pausar-tudo (desliga TODOS)
+
+### Como Aprovar Sugestões
+
+Quando receber notificação:
+```
+
+🔔 SUGESTÃO - Campanha "X"
+
+CTR 1.5% - Sugerir pausar
+
+✅ /aprovar-camp-123
+
+```
+
+Responder: /aprovar-camp-123
+
+### Segurança
+
+✅ Não pausa nada sem sua aprovação
+✅ Você tem 24h para decidir
+✅ Pode rejeitar sugestão
+✅ Histórico de todas ações
+❌ NUNCA liga modo auto sem você ativar manualmente
+
+### Custo IA
+
+- Análise de métricas: R$ 0 (local)
+- Notificações: R$ 0 (Evolution API)
+- Total: R$ 0/execução
+```
+
+## Critérios de Aceitação Final
+
+- [ ] Sistema aprovação funcional (WhatsApp + Frontend)
+- [ ] NENHUMA ação executa sem aprovação (exceto leitura)
+- [ ] Monitor custos IA ativo (R$ 0-5 primeiro mês)
+- [ ] Busca semanal validando plano
+- [ ] Kill switch testado (pausa tudo)
+- [ ] Manual completo de 50+ páginas
+- [ ] Guia segurança Instagram completo
+- [ ] ZERO postagens automáticas (confirmado)
+- [ ] ZERO pausas de campanha sem aprovação
+- [ ] Todos workflows em modo manual por padrão
+- [ ] Marco e Sabrina treinados
+- [ ] 1 semana de testes sem incidentes
+
+## Próximos Passos
+
+Aguardando sua confirmação para iniciar Sprint 1 (Semana 1: Fundação + Controles).
+
+Posso começar criando:
+
+1. As tabelas de controle no schema.sql
+2. As APIs de automations e ai-costs
+3. A página configuracoes-automacao.html
+4. Os documentos de segurança
+
+Confirmar para prosseguir?
 
 ### To-dos
 
@@ -479,3 +725,26 @@ Antes de começar a implementação, preciso saber:
 - [ ] Gerar relatórios finais (testes, segurança, performance)
 - [ ] Criar RELATORIO-AUDITORIA-COMPLETA.md e atualizar outros
 - [ ] Checklist pre-deploy e validar configs Vercel
+- [ ] Criar tabelas automation_controls, approval_queue, ai_usage_tracking, weekly_plan_updates
+- [ ] Criar backend/api/automations.js com endpoints de controle
+- [ ] Criar backend/api/ai-costs.js para rastreamento de gastos
+- [ ] Criar frontend/configuracoes-automacao.html com painel de controle
+- [ ] Criar frontend/aprovacoes.html para fila de aprovações
+- [ ] Criar docs/automations/master-plan.md versionado
+- [ ] Criar docs/automations/MANUAL-AUTOMACOES.md detalhado
+- [ ] Criar docs/automations/SEGURANCA-INSTAGRAM.md
+- [ ] Implementar Workflow 13: Monitor Custos IA com alertas 50%/75%/90%
+- [ ] Implementar Workflow 12: Busca Semanal Validação com Exa Search + Claude
+- [ ] Implementar Workflow 09: Reels Fund Tracker (auto seguro)
+- [ ] Implementar Workflow 06: Gerar Legendas com aprovação obrigatória
+- [ ] Implementar Workflow 05: Otimizar Campanhas (modo apenas notificar)
+- [ ] Criar sistema de comandos WhatsApp para aprovação e controle
+- [ ] Testar todas proteções: nada executa sem aprovação, kill switch funciona
+- [ ] Testar monitor custos: alertas em 50%, 75%, auto-pause em 90%
+- [ ] Testar fluxo completo: sugestão → WhatsApp → aprovar → executar
+- [ ] Configurar APIs gratuitas: Gemini Pro, ChatGPT Pro (assinaturas), VPS
+- [ ] Configurar Meta Ads API (readonly para começar)
+- [ ] Configurar Instagram Graph API (apenas followers count)
+- [ ] Criar relatório semanal de estimativa de custos IA
+- [ ] Finalizar documentação: manual 50+ páginas, guias de segurança
+- [ ] Treinar Marco/Sabrina: como aprovar, comandos WhatsApp, kill switch

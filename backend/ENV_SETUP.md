@@ -100,9 +100,24 @@ WHATSAPP_NUMBER=+5531993676989
 ### 🤖 n8n Integration
 
 ```bash
-N8N_WEBHOOK_URL=https://fluxos.macspark.dev/webhook
+# n8n API (para gerenciar workflows programaticamente)
+N8N_API_URL=https://fluxos.macspark.dev
 N8N_API_KEY=your_n8n_api_key_here
+
+# Webhooks n8n (para receber eventos)
+N8N_WEBHOOK_URL=https://fluxos.macspark.dev/webhook
+
+# Backend URL (usado pelos workflows n8n para chamar suas APIs)
+API_BASE_URL=https://seu-backend.vercel.app
+
+# Evolution API Instance (nome da instância WhatsApp)
+EVOLUTION_INSTANCE=sabrina-costa
 ```
+
+**Como obter:**
+1. **N8N_API_KEY:** Settings > API > Create API Key
+2. **EVOLUTION_INSTANCE:** Nome da sua instância no Evolution API
+3. **API_BASE_URL:** URL do seu backend no Vercel
 
 ---
 
@@ -139,14 +154,19 @@ RATE_LIMIT_MAX_REQUESTS=100
 # Webhook
 WEBHOOK_SECRET=gere_um_token_secreto
 
-# Evolution API
+# Evolution API (WhatsApp)
 EVOLUTION_API_URL=https://evolution.macspark.dev
 EVOLUTION_API_KEY=sua_chave_aqui
+EVOLUTION_INSTANCE=sabrina-costa
 WHATSAPP_NUMBER=+5531993676989
 
 # n8n
+N8N_API_URL=https://fluxos.macspark.dev
 N8N_WEBHOOK_URL=https://fluxos.macspark.dev/webhook
 N8N_API_KEY=sua_chave_n8n_aqui
+
+# Backend URL (para workflows n8n)
+API_BASE_URL=http://localhost:3000
 ```
 
 3. Teste a conexão:
@@ -197,8 +217,11 @@ vercel env add DATABASE_URL production
 | `WEBHOOK_SECRET` | ✅ Sim | Token para validar webhooks |
 | `EVOLUTION_API_URL` | ✅ Sim | URL Evolution API |
 | `EVOLUTION_API_KEY` | ✅ Sim | Chave Evolution API |
+| `EVOLUTION_INSTANCE` | ✅ Sim | Nome da instância WhatsApp |
 | `WHATSAPP_NUMBER` | ✅ Sim | Número WhatsApp |
-| `N8N_WEBHOOK_URL` | ⚠️ Opcional | URL base n8n |
+| `API_BASE_URL` | ✅ Sim | URL do seu backend (para n8n chamar) |
+| `N8N_API_URL` | ⚠️ Opcional | URL API n8n |
+| `N8N_WEBHOOK_URL` | ⚠️ Opcional | URL webhooks n8n |
 | `N8N_API_KEY` | ⚠️ Opcional | Chave API n8n |
 
 ---

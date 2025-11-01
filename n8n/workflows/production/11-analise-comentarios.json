@@ -1,0 +1,241 @@
+{
+  "name": "11 - Análise de Comentários (Sentiment)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 20 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger (Daily 20:00)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/analise-comentarios",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Get comments from Instagram Graph API\n// TODO: Integrate with Instagram Graph API\n\n// Simulated comments data\nconst comments = [\n  { text: 'Amei! Vou testar 💕', author: 'maria123' },\n  { text: 'Onde compra esse produto?', author: 'ana456' },\n  { text: 'Linda! 😍', author: 'julia789' },\n  { text: 'Não funcionou comigo 😞', author: 'carla321' },\n  { text: 'Qual o valor?', author: 'beatriz654' }\n];\n\n// TODO: Replace with actual Instagram API:\n// const response = await fetch(\n//   `https://graph.facebook.com/v18.0/${mediaId}/comments?access_token=${token}`,\n//   { method: 'GET' }\n// );\n\nreturn comments.map(c => ({ json: c }));"
+      },
+      "id": "get-comments",
+      "name": "Get Recent Comments (Instagram API)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200],
+      "notes": "TODO: Integrar com Instagram Graph API"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all comments\nconst comments = $input.all();\n\nconst allComments = comments.map(c => c.json.text).join('\\n');\n\nreturn [{ json: { comments: allComments, total: comments.length } }];"
+      },
+      "id": "aggregate-comments",
+      "name": "Aggregate Comments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build prompt for Claude sentiment analysis\nconst data = $input.first().json;\n\nconst prompt = `Você é analista de redes sociais.\n\nAnalise estes ${data.total} comentários do Instagram:\n\n${data.comments}\n\nRetorne análise estruturada:\n\n1. SENTIMENTO GERAL\n   - Positivos: X%\n   - Negativos: X%\n   - Neutros: X%\n\n2. TEMAS RECORRENTES\n   - Liste 3-5 temas mais mencionados\n\n3. PERGUNTAS FREQUENTES\n   - Liste 3-5 perguntas mais comuns\n\n4. INSIGHTS ACIONÁVEIS\n   - O que o público quer saber?\n   - Que tipo de conteúdo criar?\n\n5. SUGESTÕES DE POSTS\n   - 3 ideias baseadas nos comentários\n\nFormato: Markdown objetivo.`;\n\nreturn [{ json: { prompt, total_comments: data.total } }];"
+      },
+      "id": "build-prompt",
+      "name": "Build Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Call Claude API for sentiment analysis\n// TODO: Use Claude Pro\n\nconst prompt = $input.first().json.prompt;\n\n// Simulated Claude response\nconst analysis = `## ANÁLISE DE COMENTÁRIOS\n\n### 1. SENTIMENTO GERAL\n- Positivos: 70% ✅\n- Negativos: 10% ⚠️\n- Neutros: 20%\n\n### 2. TEMAS RECORRENTES\n1. Onde comprar produtos (35%)\n2. Pedidos de tutorial (25%)\n3. Elogios gerais (20%)\n4. Perguntas sobre preço (15%)\n5. Relatos de experiência (5%)\n\n### 3. PERGUNTAS FREQUENTES\n1. \"Onde compra?\"\n2. \"Qual o valor?\"\n3. \"Funciona para pele seca?\"\n4. \"Posso usar todo dia?\"\n5. \"Tem na farmácia?\"\n\n### 4. INSIGHTS\n✅ Público quer saber ONDE COMPRAR (link na bio!)\n✅ Interesse alto em tutoriais passo a passo\n✅ Dúvidas sobre preço (considere mencionar faixa)\n✅ Público tem pele seca (adaptar recomendações)\n\n### 5. SUGESTÕES DE POSTS\n1. \"Onde eu compro todos os produtos (com links)\"\n2. \"Tutorial: Rotina completa em 5 passos\"\n3. \"Produtos bons e baratos (até R$ 50)\"`;\n\n// TODO: Replace with actual Claude API\n\nconst tokensUsed = 500;\nconst costBrl = 0; // Claude Pro\n\nreturn [{\n  json: {\n    analysis: analysis,\n    tokens_used: tokensUsed,\n    cost_brl: costBrl,\n    is_free: true\n  }\n}];"
+      },
+      "id": "call-claude-api",
+      "name": "Call Claude API (Sentiment)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200],
+      "notes": "TODO: Integrar com Claude Pro"
+    },
+    {
+      "parameters": {
+        "jsCode": "const analysis = $input.first().json.analysis;\nconst totalComments = $('Build Claude Prompt').first().json.total_comments;\n\nconst message = `📊 ANÁLISE DE COMENTÁRIOS\\n\\n${totalComments} comentários analisados\\n\\n${analysis}\\n\\n💡 Use esses insights para criar conteúdo!`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-whatsapp",
+      "name": "Build WhatsApp Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/ai-costs/log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "service",
+              "value": "claude"
+            },
+            {
+              "name": "model",
+              "value": "claude-3.5-sonnet"
+            },
+            {
+              "name": "workflow_name",
+              "value": "analise-comentarios"
+            },
+            {
+              "name": "operation",
+              "value": "sentiment_analysis"
+            },
+            {
+              "name": "tokens_total",
+              "value": "={{$('Call Claude API (Sentiment)').first().json.tokens_used}}"
+            },
+            {
+              "name": "cost_brl",
+              "value": "0"
+            },
+            {
+              "name": "is_free",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-ai-usage",
+      "name": "Log AI Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2050, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/log-execution/analise-comentarios",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "log-execution",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2250, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "IA",
+      "id": "1"
+    },
+    {
+      "name": "Análise",
+      "id": "2"
+    },
+    {
+      "name": "Semi-Auto",
+      "id": "3"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

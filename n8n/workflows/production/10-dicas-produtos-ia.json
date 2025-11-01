@@ -1,0 +1,331 @@
+{
+  "name": "10 - Dicas de Produtos com IA Vision",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dicas-produto",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "dicas-produto-ia"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/dicas-produtos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract product image URL from webhook\nconst body = $('Webhook Trigger').first().json.body;\nconst imageUrl = body.image_url || body.url || '';\nconst productName = body.product_name || body.name || 'produto';\n\nif (!imageUrl) {\n  throw new Error('URL da imagem não fornecida');\n}\n\nreturn [{ json: { image_url: imageUrl, product_name: productName } }];"
+      },
+      "id": "extract-image",
+      "name": "Extract Image URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Call OpenAI Vision API or Gemini Vision\n// TODO: Integrate with Vision API\n\nconst imageUrl = $input.first().json.image_url;\nconst productName = $input.first().json.product_name;\n\n// Simulated Vision AI response\nconst tips = `🌟 DICAS DE USO - ${productName}\n\n1. **Aplicação Correta**\n   Use quantidade do tamanho de uma ervilha\n   Aplique com a pele úmida (melhor absorção)\n\n2. **Melhor Horário**\n   Manhã: Antes do protetor solar\n   Noite: Depois da limpeza profunda\n\n3. **Combo Perfeito**\n   Funciona MUITO bem com:\n   - Ácido hialurônico (antes)\n   - Protetor solar (depois)\n\n4. **O Que Evitar**\n   ❌ Não misturar com vitamina C (pode oxidar)\n   ❌ Não usar em pele muito seca sem hidratante\n\n5. **Resultado Esperado**\n   - Primeiros 7 dias: Pele mais macia\n   - 15-30 dias: Redução de oleosidade\n   - 60+ dias: Melhora visível da textura\n\n💡 Minha experiência: Uso há 3 meses e percebi MUITA diferença!`;\n\n// TODO: Replace with actual Vision API:\n// const response = await fetch('https://api.openai.com/v1/chat/completions', {\n//   method: 'POST',\n//   headers: {\n//     'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,\n//     'Content-Type': 'application/json'\n//   },\n//   body: JSON.stringify({\n//     model: 'gpt-4-vision-preview',\n//     messages: [{\n//       role: 'user',\n//       content: [\n//         { type: 'text', text: 'Analise este produto de beleza e dê 5 dicas de uso...' },\n//         { type: 'image_url', image_url: { url: imageUrl } }\n//       ]\n//     }],\n//     max_tokens: 500\n//   })\n// });\n\nconst tokensUsed = 400;\nconst costBrl = 0.50; // Vision API custa mais\n\nreturn [{\n  json: {\n    tips: tips,\n    product_name: productName,\n    image_url: imageUrl,\n    tokens_used: tokensUsed,\n    cost_brl: costBrl,\n    is_free: false\n  }\n}];"
+      },
+      "id": "call-vision-api",
+      "name": "Call Vision API (OpenAI/Gemini)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200],
+      "notes": "TODO: Integrar com OpenAI Vision ou Gemini Vision"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO content_generated (\n  type,\n  theme,\n  content,\n  status,\n  ai_service,\n  tokens_used,\n  cost_brl,\n  is_free,\n  metadata\n) VALUES (\n  'dica_produto',\n  '{{ $json.product_name.replace(/'/g, \"''\") }}',\n  '{{ $json.tips.replace(/'/g, \"''\") }}',\n  'pending_approval',\n  'openai-vision',\n  {{$json.tokens_used}},\n  {{$json.cost_brl}},\n  {{$json.is_free}},\n  '{{JSON.stringify({image_url: $json.image_url}).replace(/'/g, \"''\")}}'::jsonb\n)\nRETURNING *",
+        "options": {}
+      },
+      "id": "save-to-db",
+      "name": "Save Tips (pending_approval)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1250, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/ai-costs/log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "service",
+              "value": "openai"
+            },
+            {
+              "name": "model",
+              "value": "gpt-4-vision"
+            },
+            {
+              "name": "workflow_name",
+              "value": "dicas-produtos"
+            },
+            {
+              "name": "operation",
+              "value": "analyze_product_image"
+            },
+            {
+              "name": "tokens_total",
+              "value": "={{$json.tokens_used}}"
+            },
+            {
+              "name": "cost_brl",
+              "value": "={{$json.cost_brl}}"
+            },
+            {
+              "name": "is_free",
+              "value": "={{$json.is_free}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-ai-usage",
+      "name": "Log AI Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1450, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst tips = $('Call Vision API (OpenAI/Gemini)').first().json.tips;\nconst productName = $('Call Vision API (OpenAI/Gemini)').first().json.product_name;\nconst contentId = data.id;\n\nconst message = `✨ DICAS GERADAS - ${productName}\\n\\n${tips}\\n\\nO que fazer?\\n✅ /aprovar-dica-${contentId} (salva)\\n❌ /rejeitar-dica-${contentId} (descarta)\\n🔄 /regerar-dica-${contentId} (tenta novamente)\\n\\n⚠️ Custo: R$ ${$('Call Vision API (OpenAI/Gemini)').first().json.cost_brl.toFixed(2)} (Vision API)`;\n\nreturn [{ json: { message, content_id: contentId } }];"
+      },
+      "id": "build-whatsapp-message",
+      "name": "Build WhatsApp Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp (Approval Required)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Dicas geradas! Aguardando aprovação.\", \"content_id\": $json.content_id } }}"
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2050, 200]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check if Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Enabled": {
+      "main": [
+        [
+          {
+            "node": "If Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Enabled": {
+      "main": [
+        [
+          {
+            "node": "Extract Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Image URL": {
+      "main": [
+        [
+          {
+            "node": "Call Vision API (OpenAI/Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Vision API (OpenAI/Gemini)": {
+      "main": [
+        [
+          {
+            "node": "Save Tips (pending_approval)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Tips (pending_approval)": {
+      "main": [
+        [
+          {
+            "node": "Log AI Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log AI Usage": {
+      "main": [
+        [
+          {
+            "node": "Build WhatsApp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build WhatsApp Message": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp (Approval Required)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp (Approval Required)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "IA",
+      "id": "1"
+    },
+    {
+      "name": "Produtos",
+      "id": "2"
+    },
+    {
+      "name": "Manual",
+      "id": "3"
+    },
+    {
+      "name": "Vision",
+      "id": "4"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

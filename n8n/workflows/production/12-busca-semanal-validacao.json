@@ -1,0 +1,481 @@
+{
+  "name": "12 - Busca Semanal Validação do Plano",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger (Monday 09:00)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "notes": "Roda toda segunda-feira às 09:00"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/busca-semanal-validacao",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define search queries for this week\nconst searches = [\n  'Instagram algorithm update 2025 last 7 days',\n  'Instagram reels monetization changes 2025',\n  'Meta Ads policy updates últimos 7 dias',\n  'Instagram marketing trends novembro 2025',\n  'Influencer tools new features 2025',\n  'Instagram engagement best practices 2025'\n];\n\nreturn searches.map(query => ({ json: { query } }));"
+      },
+      "id": "define-searches",
+      "name": "Define Search Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Call Exa Search or Perplexity API\n// TODO: Use Exa Search MCP or Perplexity API\n\nconst query = $input.first().json.query;\n\n// Simulated search results (replace with actual API)\nconst results = {\n  query: query,\n  findings: [\n    {\n      title: 'Instagram prioriza Reels com menos de 30 segundos',\n      summary: 'Algoritmo atualizado favorece vídeos curtos',\n      url: 'https://example.com/article1',\n      relevance: 'high'\n    }\n  ]\n};\n\n// TODO: Replace with actual Exa Search:\n// const response = await fetch('https://api.exa.ai/search', {\n//   method: 'POST',\n//   headers: {\n//     'Authorization': `Bearer ${process.env.EXA_API_KEY}`,\n//     'Content-Type': 'application/json'\n//   },\n//   body: JSON.stringify({\n//     query: query,\n//     num_results: 5,\n//     start_published_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()\n//   })\n// });\n\nreturn [{ json: results }];"
+      },
+      "id": "call-exa-search",
+      "name": "Call Exa Search",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200],
+      "notes": "TODO: Integrar com Exa Search MCP"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all search results\nconst allResults = $input.all();\n\nconst aggregated = {\n  total_queries: allResults.length,\n  findings: allResults.map(r => r.json),\n  search_date: new Date().toISOString()\n};\n\nreturn [{ json: aggregated }];"
+      },
+      "id": "aggregate-results",
+      "name": "Aggregate Search Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build prompt for Claude to analyze findings\nconst searchResults = $input.first().json;\n\n// Read current master plan (TODO: integrate with file system)\nconst currentPlan = `Plano atual:\n- Meta: 900 seguidores (Reels Fund)\n- Baseline: 880 seguidores\n- Estratégia: Conteúdo autêntico + tráfego pago\n- Workflows: 13 automações N8N\n- Budget IA: R$ 50/mês`;\n\nconst prompt = `Você é consultor de marketing Instagram.\n\nContexto do Cliente:\n- Nome: Sabrina Costa\n- Seguidores: 880 (meta: 900)\n- Objetivo: Ativar Reels Fund e crescer organicamente\n- Nicho: Beleza, bem-estar, rotina autêntica\n\nPlano Atual:\n${currentPlan}\n\nDescobertas desta semana:\n${JSON.stringify(searchResults.findings, null, 2)}\n\nAnalise e responda em formato estruturado:\n\n1. MUDANÇAS RELEVANTES (sim/não):\n[Indique se alguma descoberta afeta nosso plano]\n\n2. RESUMO DAS MUDANÇAS:\n[Liste 3-5 mudanças mais importantes]\n\n3. AÇÕES RECOMENDADAS:\n[O que devemos fazer? Seja específico]\n\n4. URGÊNCIA (baixa/média/alta):\n[Quão urgente são essas mudanças?]\n\n5. IMPACTO NAS METAS (positivo/negativo/neutro):\n[Como afeta a meta de 900 seguidores?]\n\nFormato: Markdown limpo e objetivo.`;\n\nreturn [{ json: { prompt, search_results: searchResults } }];"
+      },
+      "id": "build-claude-prompt",
+      "name": "Build Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Call Claude API\n// TODO: Use Claude Pro (already subscribed) or Claude API\n\nconst prompt = $input.first().json.prompt;\n\n// Simulated Claude response (replace with actual API)\nconst analysis = `## 1. MUDANÇAS RELEVANTES\n\nSIM - Detectadas 2 mudanças importantes\n\n## 2. RESUMO DAS MUDANÇAS\n\n1. Instagram prioriza Reels <30s (novo algoritmo)\n2. Meta Ads aumentou CPC médio em 15%\n3. Reels Fund exige mínimo 100k plays/mês (nova política)\n\n## 3. AÇÕES RECOMENDADAS\n\n1. Ajustar todos Reels para <30s (maximizar alcance)\n2. Revisar budget Meta Ads (CPC pode aumentar)\n3. Focar em qualidade dos Reels (meta plays)\n\n## 4. URGÊNCIA\n\nMÉDIA - Não é emergência, mas agir em 7-10 dias\n\n## 5. IMPACTO NAS METAS\n\nPOSITIVO - Reels curtos tendem a viralizar mais\nNEUTRO - CPC maior compensado por alcance orgânico`;\n\n// TODO: Replace with actual Claude API call:\n// const response = await fetch('https://api.anthropic.com/v1/messages', {\n//   method: 'POST',\n//   headers: {\n//     'x-api-key': process.env.CLAUDE_API_KEY,\n//     'anthropic-version': '2023-06-01',\n//     'Content-Type': 'application/json'\n//   },\n//   body: JSON.stringify({\n//     model: 'claude-3-5-sonnet-20241022',\n//     max_tokens: 1000,\n//     messages: [{ role: 'user', content: prompt }]\n//   })\n// });\n\nconst tokensUsed = 800;\nconst costBrl = 0; // Claude Pro subscription\n\nreturn [{\n  json: {\n    analysis: analysis,\n    tokens_used: tokensUsed,\n    cost_brl: costBrl,\n    is_free: true,\n    model: 'claude-3.5-sonnet'\n  }\n}];"
+      },
+      "id": "call-claude-api",
+      "name": "Call Claude API (Analysis)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 200],
+      "notes": "TODO: Integrar com Claude Pro ou Claude API"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude analysis to determine if changes are relevant\nconst analysis = $input.first().json.analysis;\n\nconst hasChanges = analysis.includes('SIM') && !analysis.includes('NENHUMA');\nconst urgencyMatch = analysis.match(/URGÊNCIA[:\\s]*(\\w+)/i);\nconst urgency = urgencyMatch ? urgencyMatch[1].toLowerCase() : 'media';\n\nconst impactMatch = analysis.match(/IMPACTO[^:]*:[\\s]*(\\w+)/i);\nconst impact = impactMatch ? impactMatch[1].toLowerCase() : 'neutro';\n\nreturn [{\n  json: {\n    has_changes: hasChanges,\n    urgency: urgency,\n    impact: impact,\n    analysis: analysis,\n    week_start: new Date(Date.now() - (new Date().getDay() - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],\n    week_end: new Date(Date.now() + (7 - new Date().getDay()) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]\n  }\n}];"
+      },
+      "id": "parse-analysis",
+      "name": "Parse Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1850, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO weekly_plan_updates (\n  week_start,\n  week_end,\n  has_changes,\n  urgency,\n  summary,\n  ai_analysis,\n  impact\n) VALUES (\n  '{{$json.week_start}}',\n  '{{$json.week_end}}',\n  {{$json.has_changes}},\n  '{{ $json.urgency.replace(/'/g, \"''\") }}',\n  'Busca semanal concluída',\n  '{{ $json.analysis.replace(/'/g, \"''\") }}',\n  '{{ $json.impact.replace(/'/g, \"''\") }}'\n)\nRETURNING *",
+        "options": {}
+      },
+      "id": "save-to-db",
+      "name": "Save to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [2050, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.has_changes}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-has-changes",
+      "name": "If Has Changes",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2250, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst urgencyEmoji = {\n  'baixa': '🟢',\n  'media': '🟡',\n  'alta': '🔴'\n};\n\nconst emoji = urgencyEmoji[data.urgency] || '📢';\n\nconst message = `${emoji} ATUALIZAÇÃO SEMANAL DO PLANO\n\nDescobertas da semana ${data.week_start}:\n\n${data.analysis}\n\n📝 Registro salvo em:\ndocs/automations/master-plan.md\n\nVocê decide se aplica as recomendações.`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-notification-changes",
+      "name": "Build Notification (Changes)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2450, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst message = `✅ VALIDAÇÃO SEMANAL DO PLANO\n\nSemana ${data.week_start}:\n\nStatus: Plano validado\nMudanças detectadas: Nenhuma\n\nTudo OK para continuar!\nPróxima verificação: Segunda-feira 09:00`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-notification-no-changes",
+      "name": "Build Notification (No Changes)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2650, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/ai-costs/log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "service",
+              "value": "claude"
+            },
+            {
+              "name": "model",
+              "value": "claude-3.5-sonnet"
+            },
+            {
+              "name": "workflow_name",
+              "value": "busca-semanal-validacao"
+            },
+            {
+              "name": "operation",
+              "value": "analyze_trends"
+            },
+            {
+              "name": "tokens_total",
+              "value": "800"
+            },
+            {
+              "name": "cost_brl",
+              "value": "0"
+            },
+            {
+              "name": "is_free",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-ai-usage",
+      "name": "Log AI Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2850, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/log-execution/busca-semanal-validacao",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "log-execution",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [3050, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Monday 09:00)": {
+      "main": [
+        [
+          {
+            "node": "Check if Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Enabled": {
+      "main": [
+        [
+          {
+            "node": "If Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Enabled": {
+      "main": [
+        [
+          {
+            "node": "Define Search Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define Search Queries": {
+      "main": [
+        [
+          {
+            "node": "Call Exa Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Exa Search": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Search Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Search Results": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API (Analysis)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API (Analysis)": {
+      "main": [
+        [
+          {
+            "node": "Parse Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Analysis": {
+      "main": [
+        [
+          {
+            "node": "Save to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to DB": {
+      "main": [
+        [
+          {
+            "node": "If Has Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Has Changes": {
+      "main": [
+        [
+          {
+            "node": "Build Notification (Changes)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Notification (No Changes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Notification (Changes)": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Notification (No Changes)": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp Notification": {
+      "main": [
+        [
+          {
+            "node": "Log AI Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log AI Usage": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "IA",
+      "id": "1"
+    },
+    {
+      "name": "Validação",
+      "id": "2"
+    },
+    {
+      "name": "Auto",
+      "id": "3"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

@@ -1,0 +1,409 @@
+{
+  "name": "09 - Reels Fund Tracker",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger (Every 6h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/reels-fund-tracker",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Método 1: Tentar Instagram Graph API\n// Método 2: Usar scraping público (futuro)\n// Método 3: Usar valor do banco (fallback)\n\n// Por enquanto, vamos simular (você vai configurar Instagram API depois)\nconst currentFollowers = 880; // TODO: Integrar com Instagram Graph API\nconst goal = 900;\n\nreturn [{ \n  json: { \n    followers: currentFollowers,\n    goal: goal,\n    method: 'manual' // 'instagram_api', 'scraping', ou 'manual'\n  } \n}];"
+      },
+      "id": "get-followers-count",
+      "name": "Get Followers Count",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  date,\n  new_followers\nFROM metrics\nWHERE date >= CURRENT_DATE - INTERVAL '7 days'\nORDER BY date DESC\nLIMIT 7",
+        "options": {}
+      },
+      "id": "get-recent-growth",
+      "name": "Get Recent Growth",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [850, 400],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate progress and ETA\nconst followersData = $('Get Followers Count').first().json;\nconst growthData = $('Get Recent Growth').all();\n\nconst currentFollowers = followersData.followers;\nconst goal = followersData.goal;\nconst remaining = goal - currentFollowers;\nconst percentProgress = (currentFollowers / goal) * 100;\n\n// Calculate average daily growth (last 7 days)\nlet totalNewFollowers = 0;\nlet daysWithData = 0;\n\nfor (const day of growthData) {\n  if (day.json.new_followers) {\n    totalNewFollowers += parseInt(day.json.new_followers);\n    daysWithData++;\n  }\n}\n\nconst avgDailyGrowth = daysWithData > 0 ? totalNewFollowers / daysWithData : 0;\nconst etaDays = avgDailyGrowth > 0 ? Math.ceil(remaining / avgDailyGrowth) : null;\n\n// Check if goal reached\nconst goalReached = currentFollowers >= goal;\n\nreturn [{\n  json: {\n    current_followers: currentFollowers,\n    goal: goal,\n    remaining: remaining,\n    percent_progress: percentProgress.toFixed(1),\n    avg_daily_growth: avgDailyGrowth.toFixed(1),\n    eta_days: etaDays,\n    goal_reached: goalReached,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "calculate-progress",
+      "name": "Calculate Progress",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO config (key, value)\nVALUES (\n  'reels_fund_progress',\n  '{{JSON.stringify($json).replace(/'/g, \"''\")}}'::jsonb\n)\nON CONFLICT (key) DO UPDATE\nSET value = '{{JSON.stringify($json).replace(/'/g, \"''\")}}'::jsonb,\n    updated_at = NOW()\nRETURNING *",
+        "options": {}
+      },
+      "id": "save-to-db",
+      "name": "Save to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1250, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.goal_reached}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-goal-reached",
+      "name": "If Goal Reached",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst message = `🎉🎉🎉 PARABÉNS SABRINA!\n\nMeta Reels Fund ATINGIDA!\nSeguidores: ${data.current_followers}\n\nPróximos passos:\n1. Ativar Reels Fund no Instagram\n2. Começar monetização\n3. Criar conteúdo de qualidade para Reels\n\nParabéns pelo crescimento! 🚀`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-celebration",
+      "name": "Build Celebration Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-celebration",
+      "name": "Send Celebration WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst message = `📊 PROGRESSO REELS FUND\n\nSeguidores atuais: ${data.current_followers}\nMeta: ${data.goal}\nFaltam: ${data.remaining} seguidores\n\nTaxa crescimento: +${data.avg_daily_growth}/dia (média 7 dias)\nETA: ${data.eta_days ? data.eta_days + ' dias' : 'Calculando...'}\n\nVocê está ${data.percent_progress}% lá! 🚀`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-progress",
+      "name": "Build Progress Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-progress",
+      "name": "Send Progress (Optional)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 400],
+      "disabled": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      },
+      "notes": "Desabilitado por padrão. Habilite se quiser receber notificação a cada atualização."
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/log-execution/reels-fund-tracker",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "log-execution",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2050, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Every 6h)": {
+      "main": [
+        [
+          {
+            "node": "Check if Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Enabled": {
+      "main": [
+        [
+          {
+            "node": "If Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Enabled": {
+      "main": [
+        [
+          {
+            "node": "Get Followers Count",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Recent Growth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Followers Count": {
+      "main": [
+        [
+          {
+            "node": "Calculate Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Growth": {
+      "main": [
+        [
+          {
+            "node": "Calculate Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Progress": {
+      "main": [
+        [
+          {
+            "node": "Save to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to DB": {
+      "main": [
+        [
+          {
+            "node": "If Goal Reached",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Goal Reached": {
+      "main": [
+        [
+          {
+            "node": "Build Celebration Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Progress Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Celebration Message": {
+      "main": [
+        [
+          {
+            "node": "Send Celebration WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Celebration WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Progress Message": {
+      "main": [
+        [
+          {
+            "node": "Send Progress (Optional)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Progress (Optional)": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Tracking",
+      "id": "1"
+    },
+    {
+      "name": "Auto",
+      "id": "2"
+    },
+    {
+      "name": "Seguro",
+      "id": "3"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

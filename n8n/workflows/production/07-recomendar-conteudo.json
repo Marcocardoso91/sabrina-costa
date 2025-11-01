@@ -1,0 +1,423 @@
+{
+  "name": "07 - Recomendar Conteúdo IA",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger (Daily 08:00)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/recomendar-conteudo",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  date,\n  theme,\n  format,\n  status\nFROM posts\nWHERE date >= CURRENT_DATE - INTERVAL '30 days'\nORDER BY date DESC\nLIMIT 30",
+        "options": {}
+      },
+      "id": "get-recent-posts",
+      "name": "Get Recent Posts (Last 30)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [850, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  date,\n  ctr,\n  new_followers,\n  visits\nFROM metrics\nWHERE date >= CURRENT_DATE - INTERVAL '30 days'\nORDER BY date DESC",
+        "options": {}
+      },
+      "id": "get-recent-metrics",
+      "name": "Get Recent Metrics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [850, 400],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate data for AI analysis\nconst posts = $('Get Recent Posts (Last 30)').all();\nconst metrics = $('Get Recent Metrics').all();\n\n// Count posts by theme\nconst themeCount = {};\nconst formatCount = {};\n\nposts.forEach(post => {\n  const theme = post.json.theme;\n  const format = post.json.format;\n  \n  themeCount[theme] = (themeCount[theme] || 0) + 1;\n  formatCount[format] = (formatCount[format] || 0) + 1;\n});\n\n// Calculate average metrics\nconst avgMetrics = metrics.reduce((acc, m) => {\n  return {\n    ctr: acc.ctr + (parseFloat(m.json.ctr) || 0),\n    followers: acc.followers + (parseInt(m.json.new_followers) || 0),\n    visits: acc.visits + (parseInt(m.json.visits) || 0),\n    count: acc.count + 1\n  };\n}, { ctr: 0, followers: 0, visits: 0, count: 0 });\n\nconst avg = {\n  ctr: (avgMetrics.ctr / avgMetrics.count).toFixed(2),\n  followers: Math.round(avgMetrics.followers / avgMetrics.count),\n  visits: Math.round(avgMetrics.visits / avgMetrics.count)\n};\n\nreturn [{\n  json: {\n    total_posts: posts.length,\n    theme_distribution: themeCount,\n    format_distribution: formatCount,\n    avg_metrics: avg,\n    period: '30_days'\n  }\n}];"
+      },
+      "id": "analyze-data",
+      "name": "Analyze Posts & Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build prompt for Claude to recommend content\nconst data = $input.first().json;\n\nconst prompt = `Você é consultora de conteúdo Instagram especializada em crescimento orgânico.\n\nContexto da Cliente:\n- Nome: Sabrina Costa\n- Seguidores: 880 (meta: 900)\n- Nicho: Beleza autêntica, bem-estar, rotina real\n- Tom: Leve, próximo, como amiga\n\nDados dos últimos 30 dias:\n- Total de posts: ${data.total_posts}\n- Temas mais usados: ${JSON.stringify(data.theme_distribution)}\n- Formatos: ${JSON.stringify(data.format_distribution)}\n- Métricas médias:\n  - CTR: ${data.avg_metrics.ctr}%\n  - Novos seguidores/dia: ${data.avg_metrics.followers}\n  - Visitas/dia: ${data.avg_metrics.visits}\n\nPilares de Conteúdo (distribuição ideal):\n1. Beleza e autocuidado real (30%)\n2. Estilo e expressão pessoal (25%)\n3. Bem-estar e leveza emocional (20%)\n4. Rotina e dia a dia real (15%)\n5. Autoestima e evolução pessoal (20%)\n\nCom base nesses dados, recomende:\n\n1. 5 TEMAS ESPECÍFICOS para posts desta semana\n   - Considere o que já foi postado (evitar repetição)\n   - Priorize temas com potencial viral\n   - Mantenha autenticidade\n\n2. FORMATO recomendado (Reel, Carrossel ou Stories)\n\n3. JUSTIFICATIVA de cada recomendação\n\nFormato: Markdown estruturado e objetivo.`;\n\nreturn [{ json: { prompt } }];"
+      },
+      "id": "build-claude-prompt",
+      "name": "Build Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Call Claude API\n// TODO: Use Claude Pro (already subscribed)\n\nconst prompt = $input.first().json.prompt;\n\n// Simulated Claude response\nconst recommendations = `## RECOMENDAÇÕES DE CONTEÚDO\n\n### 1. \"Minha rotina noturna de skincare em 3 passos\"\n**Formato:** Reel (<30s)\n**Justificativa:** Skincare é seu forte. Reels curtos têm 2x mais alcance.\n**Gancho:** \"Você não precisa de 10 produtos...\"\n\n### 2. \"O que aprendi errando muito com cabelo cacheado\"\n**Formato:** Carrossel (5-7 slides)\n**Justificativa:** Erros humanizam. Público cacheado é engajado.\n**Gancho:** \"Meu cabelo já foi um desastre...\"\n\n### 3. \"Produtos que realmente funcionaram (testei todos)\"\n**Formato:** Reel\n**Justificativa:** Autenticidade é seu diferencial. Reviews honestos convertem.\n**Gancho:** \"Gastei R$ 300 testando pra você...\"\n\n### 4. \"Meu café da manhã favorito + momento de pausa\"\n**Formato:** Stories (sequência 3-5)\n**Justificativa:** Rotina real cria conexão. Baixo esforço, alto retorno.\n\n### 5. \"Como minha autoestima mudou em 6 meses\"\n**Formato:** Carrossel\n**Justificativa:** Evolução pessoal inspira. Pilar menos explorado recentemente.\n**Gancho:** \"Eu não me reconheço nas fotos de janeiro...\"\n\n## PRÓXIMA SEMANA\nPriorize: Reels (<30s) + 1 carrossel + Stories diários`;\n\n// TODO: Replace with actual Claude API\n// const response = await fetch('https://api.anthropic.com/v1/messages', ...);\n\nconst tokensUsed = 600;\nconst costBrl = 0; // Claude Pro subscription\n\nreturn [{\n  json: {\n    recommendations: recommendations,\n    tokens_used: tokensUsed,\n    cost_brl: costBrl,\n    is_free: true\n  }\n}];"
+      },
+      "id": "call-claude-api",
+      "name": "Call Claude API (Recommendations)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 300],
+      "notes": "TODO: Integrar com Claude Pro"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO content_generated (\n  type,\n  content,\n  status,\n  ai_service,\n  model,\n  tokens_used,\n  cost_brl,\n  is_free\n) VALUES (\n  'recomendacao',\n  '{{ $json.recommendations.replace(/'/g, \"''\") }}',\n  'approved',\n  'claude',\n  'claude-3.5-sonnet',\n  {{$json.tokens_used}},\n  {{$json.cost_brl}},\n  {{$json.is_free}}\n)\nRETURNING *",
+        "options": {}
+      },
+      "id": "save-to-db",
+      "name": "Save Recommendations",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1650, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const recommendations = $input.first().json.recommendations;\n\nconst message = `📝 RECOMENDAÇÕES DE CONTEÚDO\n\n${recommendations}\n\n💡 Use essas ideias para planejar sua semana!\n\nQuer mais detalhes sobre algum tema?\nResponda com o número (1-5)`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-whatsapp",
+      "name": "Build WhatsApp Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2050, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/ai-costs/log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "service",
+              "value": "claude"
+            },
+            {
+              "name": "model",
+              "value": "claude-3.5-sonnet"
+            },
+            {
+              "name": "workflow_name",
+              "value": "recomendar-conteudo"
+            },
+            {
+              "name": "operation",
+              "value": "recommend_content"
+            },
+            {
+              "name": "tokens_total",
+              "value": "={{$('Call Claude API (Recommendations)').first().json.tokens_used}}"
+            },
+            {
+              "name": "cost_brl",
+              "value": "={{$('Call Claude API (Recommendations)').first().json.cost_brl}}"
+            },
+            {
+              "name": "is_free",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-ai-usage",
+      "name": "Log AI Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2250, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/log-execution/recomendar-conteudo",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "log-execution",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Daily 08:00)": {
+      "main": [
+        [
+          {
+            "node": "Check if Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Enabled": {
+      "main": [
+        [
+          {
+            "node": "If Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Enabled": {
+      "main": [
+        [
+          {
+            "node": "Get Recent Posts (Last 30)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Recent Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Posts (Last 30)": {
+      "main": [
+        [
+          {
+            "node": "Analyze Posts & Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Metrics": {
+      "main": [
+        [
+          {
+            "node": "Analyze Posts & Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Posts & Metrics": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API (Recommendations)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API (Recommendations)": {
+      "main": [
+        [
+          {
+            "node": "Save Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Build WhatsApp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build WhatsApp Message": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Log AI Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log AI Usage": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "IA",
+      "id": "1"
+    },
+    {
+      "name": "Conteúdo",
+      "id": "2"
+    },
+    {
+      "name": "Semi-Auto",
+      "id": "3"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

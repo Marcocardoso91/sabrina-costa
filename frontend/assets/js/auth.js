@@ -64,7 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
         'ganchos.html',
         'checklist.html',
         'relatorios.html',
-        'configuracoes.html'
+        'configuracoes.html',
+        'configuracoes-automacao.html',
+        'aprovacoes.html'
     ];
 
     // Protect page if needed

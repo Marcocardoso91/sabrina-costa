@@ -1,0 +1,417 @@
+{
+  "name": "06 - Gerar Legendas com IA",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gerar-legenda",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "gerar-legenda-ia"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/gerar-legendas",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract theme from webhook payload\nconst body = $('Webhook Trigger').first().json.body;\nconst theme = body.theme || body.tema || '';\n\nif (!theme) {\n  throw new Error('Tema não fornecido. Envie: { \"theme\": \"Seu tema aqui\" }');\n}\n\nreturn [{ json: { theme } }];"
+      },
+      "id": "extract-theme",
+      "name": "Extract Theme",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build prompt for AI\nconst theme = $input.first().json.theme;\n\nconst prompt = `Você é Sabrina Costa, uma blogueira autêntica e próxima do seu público.\n\nCrie uma legenda para Instagram sobre: \"${theme}\"\n\nDiretrizes:\n- Tom: Leve, conversacional, como amiga falando\n- Tamanho: 150-200 caracteres (conciso)\n- Inclua: 3-5 hashtags relevantes\n- Inclua: Um CTA sutil (ex: \"Salva pra não esquecer\", \"Me conta nos comentários\")\n- Inclua: 2-3 emojis estratégicos\n- Estilo: Autêntico, não vendedor, empoderador\n- Evite: Clichês, linguagem corporativa, promessas exageradas\n\nPilares de conteúdo:\n1. Beleza e autocuidado real (produtos que funcionam)\n2. Estilo e expressão pessoal (autenticidade)\n3. Bem-estar e leveza emocional\n4. Rotina e dia a dia real\n5. Autoestima e evolução pessoal\n\nGere APENAS a legenda, sem explicações adicionais.`;\n\nreturn [{ json: { prompt, theme } }];"
+      },
+      "id": "build-prompt",
+      "name": "Build AI Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Priority cascade for free AI services\n// 1. Gemini Pro (Google - free tier)\n// 2. ChatGPT Pro (already subscribed)\n// 3. Claude Pro (already subscribed)\n// 4. OpenAI API (paid, fallback)\n\nconst preferFree = true; // Always prefer free\n\nlet aiService = 'gemini'; // Default to free\nlet isFree = true;\nlet estimatedCost = 0;\n\n// TODO: Configure actual API keys\n// For now, we'll use a placeholder\n\nreturn [{ \n  json: { \n    ai_service: aiService,\n    is_free: isFree,\n    estimated_cost_brl: estimatedCost,\n    prompt: $input.first().json.prompt,\n    theme: $input.first().json.theme\n  } \n}];"
+      },
+      "id": "select-ai-service",
+      "name": "Select AI Service (Free First)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Call AI API\n// TODO: Integrate with Gemini Pro, ChatGPT, or Claude\n\nconst theme = $input.first().json.theme;\nconst prompt = $input.first().json.prompt;\n\n// Simulated AI response (replace with actual API call)\nconst caption = `Acordar cedo tem seus privilégios ☀️ E o principal deles? Tempo pra cuidar de mim antes do dia começar. ${theme} é sagrado - aqueles minutinhos que fazem toda diferença.\\n\\nHoje compartilho o que realmente funciona pra mim 💧✨\\n\\nSalva pra não esquecer!\\n\\n#autocuidado #rotinamatinal #dicasdebeleza #vidaReal #sabrinacosta`;\n\n// TODO: Replace with actual AI API call\n// Example with OpenAI:\n// const response = await fetch('https://api.openai.com/v1/chat/completions', {\n//   method: 'POST',\n//   headers: {\n//     'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,\n//     'Content-Type': 'application/json'\n//   },\n//   body: JSON.stringify({\n//     model: 'gpt-4o-mini',\n//     messages: [{ role: 'user', content: prompt }],\n//     max_tokens: 300\n//   })\n// });\n// const data = await response.json();\n// const caption = data.choices[0].message.content;\n\nconst tokensUsed = 250; // Estimated\nconst costBrl = 0; // Free tier\n\nreturn [{\n  json: {\n    caption: caption,\n    theme: theme,\n    ai_service: $input.first().json.ai_service,\n    tokens_used: tokensUsed,\n    cost_brl: costBrl,\n    is_free: true\n  }\n}];"
+      },
+      "id": "call-ai-api",
+      "name": "Call AI API (Gemini/ChatGPT/Claude)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200],
+      "notes": "TODO: Integrar com API real (Gemini Pro, ChatGPT Pro, ou Claude Pro)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO content_generated (\n  type,\n  theme,\n  content,\n  status,\n  ai_service,\n  tokens_used,\n  cost_brl,\n  is_free\n) VALUES (\n  'legenda',\n  '{{ $json.theme.replace(/'/g, \"''\") }}',\n  '{{ $json.caption.replace(/'/g, \"''\") }}',\n  'pending_approval',\n  '{{ $json.ai_service.replace(/'/g, \"''\") }}',\n  {{$json.tokens_used}},\n  {{$json.cost_brl}},\n  {{$json.is_free}}\n)\nRETURNING *",
+        "options": {}
+      },
+      "id": "save-to-db",
+      "name": "Save to DB (pending_approval)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1650, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      },
+      "notes": "Salva como pending_approval - NUNCA posta automaticamente"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/ai-costs/log",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "service",
+              "value": "={{$json.ai_service}}"
+            },
+            {
+              "name": "workflow_name",
+              "value": "gerar-legendas"
+            },
+            {
+              "name": "operation",
+              "value": "generate_caption"
+            },
+            {
+              "name": "tokens_total",
+              "value": "={{$json.tokens_used}}"
+            },
+            {
+              "name": "cost_brl",
+              "value": "={{$json.cost_brl}}"
+            },
+            {
+              "name": "is_free",
+              "value": "={{$json.is_free}}"
+            },
+            {
+              "name": "success",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-ai-usage",
+      "name": "Log AI Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst caption = $('Call AI API (Gemini/ChatGPT/Claude)').first().json.caption;\nconst theme = $('Call AI API (Gemini/ChatGPT/Claude)').first().json.theme;\nconst contentId = data.id;\n\nconst message = `✨ Legenda gerada para \"${theme}\":\n\n---\n${caption}\n---\n\nO que fazer?\n✅ /aprovar-leg-${contentId} (salva como aprovada, você copia e posta)\n✏️ /editar-leg-${contentId} (envie nova versão)\n❌ /rejeitar-leg-${contentId} (descarta)\n🔄 /regerar-leg-${contentId} (gera outra)\n\n⚠️ LEMBRETE: NUNCA é postado automaticamente. Você sempre posta manualmente!`;\n\nreturn [{ json: { message, content_id: contentId } }];"
+      },
+      "id": "build-whatsapp-message",
+      "name": "Build WhatsApp Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2050, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp (Approval Required)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2250, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Legenda gerada com sucesso! Aguardando sua aprovação.\", \"content_id\": $json.content_id } }}"
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2450, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": false, \"message\": \"Workflow desativado\" } }}"
+      },
+      "id": "respond-disabled",
+      "name": "Respond Disabled",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/log-execution/gerar-legendas",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "log-execution",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2250, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check if Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Enabled": {
+      "main": [
+        [
+          {
+            "node": "If Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Enabled": {
+      "main": [
+        [
+          {
+            "node": "Extract Theme",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Disabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Theme": {
+      "main": [
+        [
+          {
+            "node": "Build AI Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI Prompt": {
+      "main": [
+        [
+          {
+            "node": "Select AI Service (Free First)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select AI Service (Free First)": {
+      "main": [
+        [
+          {
+            "node": "Call AI API (Gemini/ChatGPT/Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call AI API (Gemini/ChatGPT/Claude)": {
+      "main": [
+        [
+          {
+            "node": "Save to DB (pending_approval)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to DB (pending_approval)": {
+      "main": [
+        [
+          {
+            "node": "Log AI Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log AI Usage": {
+      "main": [
+        [
+          {
+            "node": "Build WhatsApp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build WhatsApp Message": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp (Approval Required)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp (Approval Required)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "IA",
+      "id": "1"
+    },
+    {
+      "name": "Conteúdo",
+      "id": "2"
+    },
+    {
+      "name": "Manual",
+      "id": "3"
+    },
+    {
+      "name": "Aprovação",
+      "id": "4"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

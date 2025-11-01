@@ -404,12 +404,22 @@
                     this.currentMetrics.ctr = parseFloat(latest.ctr);
                     this.currentMetrics.cpc = parseFloat(latest.cpc).toFixed(2);
                     
-                    // Calculate trends
-                    const ctrDiff = ((latest.ctr - previous.ctr) / previous.ctr * 100).toFixed(1);
-                    this.currentMetrics.ctrTrend = ctrDiff > 0 ? `+${ctrDiff}%` : `${ctrDiff}%`;
+                    // Calculate trends (safe division - avoid division by zero)
+                    let ctrDiff = 0;
+                    if (previous.ctr && previous.ctr > 0) {
+                        ctrDiff = ((latest.ctr - previous.ctr) / previous.ctr * 100).toFixed(1);
+                        this.currentMetrics.ctrTrend = ctrDiff > 0 ? `+${ctrDiff}%` : `${ctrDiff}%`;
+                    } else {
+                        this.currentMetrics.ctrTrend = '-';
+                    }
                     
-                    const cpcDiff = ((latest.cpc - previous.cpc) / previous.cpc * 100).toFixed(1);
-                    this.currentMetrics.cpcTrend = cpcDiff > 0 ? `+${cpcDiff}%` : `${cpcDiff}%`;
+                    let cpcDiff = 0;
+                    if (previous.cpc && previous.cpc > 0) {
+                        cpcDiff = ((latest.cpc - previous.cpc) / previous.cpc * 100).toFixed(1);
+                        this.currentMetrics.cpcTrend = cpcDiff > 0 ? `+${cpcDiff}%` : `${cpcDiff}%`;
+                    } else {
+                        this.currentMetrics.cpcTrend = '-';
+                    }
                     
                     // Sum followers
                     this.currentMetrics.newFollowers = this.metricsData.reduce((sum, m) => sum + parseInt(m.newFollowers || m.new_followers || 0), 0);
@@ -474,7 +484,7 @@
                             labels: this.metricsData.map(m => dayjs(m.date).format('DD/MM')),
                             datasets: [{
                                 label: 'Novos Seguidores',
-                                data: this.metricsData.map(m => m.newFollowers),
+                                data: this.metricsData.map(m => Number(m.newFollowers || m.new_followers || 0)),
                                 backgroundColor: 'rgba(147, 51, 234, 0.8)',
                                 borderRadius: 6
                             }]

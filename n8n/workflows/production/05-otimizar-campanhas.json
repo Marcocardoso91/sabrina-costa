@@ -1,0 +1,296 @@
+{
+  "name": "05 - Otimizar Campanhas Meta Ads",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger (Every 2h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/otimizar-campanhas",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Get campaigns from Meta Ads API\n// TODO: Integrate with Meta Ads API\n\n// Simulated campaign data (replace with actual API call)\nconst campaigns = [\n  {\n    id: 'camp_001',\n    name: 'Seguidores RJ',\n    status: 'ACTIVE',\n    ctr: 1.5, // Below threshold (2%)\n    cpc: 0.92,\n    spend_24h: 18.50,\n    followers_24h: 2\n  },\n  {\n    id: 'camp_002',\n    name: 'Mulheres SP',\n    status: 'ACTIVE',\n    ctr: 4.2, // Above threshold (4%) - opportunity\n    cpc: 0.78,\n    spend_24h: 22.00,\n    followers_24h: 8\n  }\n];\n\n// TODO: Replace with actual Meta Ads API call:\n// const response = await fetch(\n//   `https://graph.facebook.com/v18.0/act_${adAccountId}/campaigns`,\n//   {\n//     headers: {\n//       'Authorization': `Bearer ${process.env.META_ADS_ACCESS_TOKEN}`\n//     }\n//   }\n// );\n\nreturn campaigns.map(c => ({ json: c }));"
+      },
+      "id": "get-campaigns",
+      "name": "Get Active Campaigns (Meta Ads API)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200],
+      "notes": "TODO: Integrar com Meta Ads API real"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Analyze campaign performance and create suggestions\nconst campaign = $input.first().json;\n\nconst thresholds = {\n  ctr_min: 2.0, // Minimum acceptable CTR (%)\n  ctr_good: 4.0, // Good CTR for scaling (%)\n  cpc_max: 1.00 // Maximum acceptable CPC (R$)\n};\n\nconst suggestions = [];\n\n// Check if CTR is low\nif (campaign.ctr < thresholds.ctr_min) {\n  suggestions.push({\n    campaign_id: campaign.id,\n    campaign_name: campaign.name,\n    action_type: 'suggest_pause_campaign',\n    reason: `CTR ${campaign.ctr}% está abaixo da meta de ${thresholds.ctr_min}%`,\n    suggested_action: 'Pausar campanha',\n    impact: `Economia estimada: R$ ${campaign.spend_24h.toFixed(2)}/dia`,\n    priority: 'high',\n    data: campaign\n  });\n}\n\n// Check if CPC is high\nif (campaign.cpc > thresholds.cpc_max) {\n  suggestions.push({\n    campaign_id: campaign.id,\n    campaign_name: campaign.name,\n    action_type: 'suggest_adjust_targeting',\n    reason: `CPC R$ ${campaign.cpc} está acima de R$ ${thresholds.cpc_max}`,\n    suggested_action: 'Ajustar targeting da campanha',\n    impact: 'Redução esperada de 20-30% no CPC',\n    priority: 'normal',\n    data: campaign\n  });\n}\n\n// Check if CTR is excellent (scaling opportunity)\nif (campaign.ctr >= thresholds.ctr_good) {\n  suggestions.push({\n    campaign_id: campaign.id,\n    campaign_name: campaign.name,\n    action_type: 'suggest_increase_budget',\n    reason: `CTR ${campaign.ctr}% está excelente (acima de ${thresholds.ctr_good}%)`,\n    suggested_action: 'Aumentar budget em 20%',\n    impact: 'Crescimento acelerado esperado',\n    priority: 'normal',\n    data: campaign\n  });\n}\n\nreturn suggestions.map(s => ({ json: s }));"
+      },
+      "id": "analyze-performance",
+      "name": "Analyze Performance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO approval_queue (\n  workflow_name,\n  action_type,\n  action_data,\n  reason,\n  impact,\n  priority,\n  expires_at\n) VALUES (\n  'otimizar-campanhas',\n  '{{ $json.action_type.replace(/'/g, \"''\") }}',\n  '{{JSON.stringify($json.data).replace(/'/g, \"''\")}}'::jsonb,\n  '{{ $json.reason.replace(/'/g, \"''\") }}',\n  '{{ $json.impact.replace(/'/g, \"''\") }}',\n  '{{ $json.priority.replace(/'/g, \"''\") }}',\n  NOW() + INTERVAL '24 hours'\n)\nRETURNING *",
+        "options": {}
+      },
+      "id": "save-to-approval-queue",
+      "name": "Save to Approval Queue",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1250, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      },
+      "notes": "CRÍTICO: Salva como pending - NÃO EXECUTA automaticamente"
+    },
+    {
+      "parameters": {
+        "jsCode": "const approval = $input.first().json;\n\nconst priorityEmoji = {\n  'urgent': '🔴',\n  'high': '🟠',\n  'normal': '🟡',\n  'low': '⚪'\n};\n\nconst emoji = priorityEmoji[approval.priority] || '🔔';\n\nconst message = `${emoji} SUGESTÃO - Campanha \"${approval.action_data.name}\"\n\nProblema detectado:\n- CTR: ${approval.action_data.ctr}%\n- Gasto últimas 24h: R$ ${approval.action_data.spend_24h.toFixed(2)}\n- Resultado: ${approval.action_data.followers_24h} novos seguidores\n\nSugestão: ${approval.suggested_action}\nImpacto: ${approval.impact}\n\nAprovar esta ação?\n✅ /aprovar-camp-${approval.id}\n❌ /rejeitar-camp-${approval.id}\n📊 /detalhes-camp-${approval.id}\n\n⏰ Expira em: 24 horas\n\n⚠️ Modo: Manual (NADA é feito sem sua aprovação)`;\n\nreturn [{ json: { message, approval_id: approval.id } }];"
+      },
+      "id": "build-notification",
+      "name": "Build Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp (APENAS NOTIFICA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      },
+      "notes": "APENAS NOTIFICA - NÃO EXECUTA AÇÃO"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/log-execution/otimizar-campanhas",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "log-execution",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "no-operation",
+      "name": "No Operation (Disabled)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [850, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Every 2h)": {
+      "main": [
+        [
+          {
+            "node": "Check if Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Enabled": {
+      "main": [
+        [
+          {
+            "node": "If Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Enabled": {
+      "main": [
+        [
+          {
+            "node": "Get Active Campaigns (Meta Ads API)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation (Disabled)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Campaigns (Meta Ads API)": {
+      "main": [
+        [
+          {
+            "node": "Analyze Performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Performance": {
+      "main": [
+        [
+          {
+            "node": "Save to Approval Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Approval Queue": {
+      "main": [
+        [
+          {
+            "node": "Build Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Notification": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp (APENAS NOTIFICA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp (APENAS NOTIFICA)": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "IA",
+      "id": "1"
+    },
+    {
+      "name": "Campanhas",
+      "id": "2"
+    },
+    {
+      "name": "Manual",
+      "id": "3"
+    },
+    {
+      "name": "Aprovação",
+      "id": "4"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

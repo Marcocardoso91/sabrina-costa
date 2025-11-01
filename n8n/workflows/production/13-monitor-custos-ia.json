@@ -1,0 +1,379 @@
+{
+  "name": "13 - Monitor Custos IA",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/monitorar-custos-ia",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/ai-costs/current-month",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "get-current-costs",
+      "name": "Get Current Costs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/ai-costs/alerts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-alerts",
+      "name": "Check Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.should_notify}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-should-notify",
+      "name": "If Should Notify",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build notification message based on alert level\nconst data = $input.first().json;\nconst alerts = data.alerts || [];\nconst percentUsed = parseFloat(data.percent_used);\nconst currentCost = parseFloat(data.current_cost_brl);\nconst budget = parseFloat(data.budget_brl);\n\nlet message = '';\nlet emoji = '';\n\nif (percentUsed >= 90) {\n  emoji = '🔴';\n  message = `${emoji} LIMITE CRÍTICO: Budget IA em ${percentUsed.toFixed(1)}%!\\n\\n`;\n  message += `Gasto: R$ ${currentCost.toFixed(2)} / R$ ${budget.toFixed(2)}\\n\\n`;\n  message += `🚨 AÇÃO AUTOMÁTICA TOMADA:\\n`;\n  message += `❌ Pausados workflows com custo:\\n`;\n  message += `   - Gerar Legendas\\n`;\n  message += `   - Análise Preditiva\\n`;\n  message += `   - Recomendar Conteúdo\\n\\n`;\n  message += `✅ Mantidos ativos (custo zero):\\n`;\n  message += `   - Reels Fund Tracker\\n`;\n  message += `   - Busca Semanal (Claude Pro)\\n`;\n  message += `   - Monitor Custos\\n\\n`;\n  message += `O que fazer agora?\\n`;\n  message += `/aumentar-budget 100\\n`;\n  message += `/manter-pausado\\n`;\n  message += `/usar-apenas-gratuitos`;\n} else if (percentUsed >= 75) {\n  emoji = '🟠';\n  message = `${emoji} ATENÇÃO: Budget IA em ${percentUsed.toFixed(1)}%\\n\\n`;\n  message += `Gasto: R$ ${currentCost.toFixed(2)} / R$ ${budget.toFixed(2)}\\n`;\n  message += `Projeção mês: R$ ${data.projected_total_brl || 'N/A'}\\n\\n`;\n  message += `⚠️ ALERTA: Pode ultrapassar o limite!\\n\\n`;\n  message += `Recomendação:\\n`;\n  message += `- Priorizar apenas Gemini/ChatGPT gratuitos\\n`;\n  message += `- Reduzir frequência de análises`;\n} else if (percentUsed >= 50) {\n  emoji = '🟡';\n  message = `${emoji} ALERTA: Budget IA em ${percentUsed.toFixed(1)}%\\n\\n`;\n  message += `Gasto: R$ ${currentCost.toFixed(2)} / R$ ${budget.toFixed(2)}\\n`;\n  message += `Projeção mês: R$ ${data.projected_total_brl || 'N/A'}\\n\\n`;\n  message += `Status: Tudo OK\\n`;\n  message += `Continuar monitorando.`;\n}\n\nreturn [{ json: { message, percent_used: percentUsed, should_pause: percentUsed >= 90 } }];"
+      },
+      "id": "build-message",
+      "name": "Build Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/{{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.should_pause}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-should-pause",
+      "name": "If Should Pause (90%)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1850, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/ai-costs/pause-workflows",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "pause-workflows",
+      "name": "Pause Expensive Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2050, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/log-execution/monitorar-custos-ia",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "log-execution",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2250, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "no-operation",
+      "name": "No Operation",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check if Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Enabled": {
+      "main": [
+        [
+          {
+            "node": "If Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Enabled": {
+      "main": [
+        [
+          {
+            "node": "Get Current Costs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Current Costs": {
+      "main": [
+        [
+          {
+            "node": "Check Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Alerts": {
+      "main": [
+        [
+          {
+            "node": "If Should Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Should Notify": {
+      "main": [
+        [
+          {
+            "node": "Build Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Message": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "If Should Pause (90%)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Should Pause (90%)": {
+      "main": [
+        [
+          {
+            "node": "Pause Expensive Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pause Expensive Workflows": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "IA",
+      "id": "1"
+    },
+    {
+      "name": "Custos",
+      "id": "2"
+    },
+    {
+      "name": "Auto",
+      "id": "3"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

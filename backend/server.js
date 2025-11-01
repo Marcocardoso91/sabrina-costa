@@ -83,6 +83,8 @@ const scheduleRoutes = require('./api/schedule');
 const hooksRoutes = require('./api/hooks');
 const configRoutes = require('./api/config');
 const debugRoutes = require('./api/debug');
+const automationsRoutes = require('./api/automations');
+const aiCostsRoutes = require('./api/ai-costs');
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -103,6 +105,8 @@ app.use('/api/schedule', scheduleRoutes);
 app.use('/api/hooks', hooksRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/debug', debugRoutes);
+app.use('/api/automations', automationsRoutes);
+app.use('/api/ai-costs', aiCostsRoutes);
 
 // 404 handler
 app.use((req, res) => {

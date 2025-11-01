@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações de Automação | Dashboard Sabrina Costa</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Day.js -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/relativeTime.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/locale/pt-br.js"></script>
+    
+    <!-- API Client / Auth -->
+    <script src="./assets/js/api.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Toggle Switch Custom */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10b981;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10b981;
+        }
+        
+        /* Kill Switch Animation */
+        .kill-switch-btn {
+            transition: all 0.3s ease;
+        }
+        .kill-switch-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 25px -5px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Pulse Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50" x-data="automationsApp()" x-init="init()">
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="./index.html" class="text-2xl font-bold text-pink-600">Dashboard Sabrina</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="./dashboard.html" class="text-gray-600 hover:text-gray-900">Dashboard</a>
+                    <a href="./configuracoes-automacao.html" class="text-pink-600 font-medium">Automações</a>
+                    <button @click="logout()" class="text-gray-600 hover:text-gray-900">Sair</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 class="text-3xl font-bold">⚙️ Configurações de Automação</h1>
+            <p class="mt-2 text-purple-100">Controle total sobre workflows N8N e custos de IA</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Loading State -->
+        <div x-show="loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+            <p class="mt-4 text-gray-600">Carregando configurações...</p>
+        </div>
+
+        <!-- Error State -->
+        <div x-show="error" x-cloak class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Erro ao carregar</h3>
+                    <p class="mt-1 text-sm text-red-700" x-text="error"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div x-show="!loading && !error" x-cloak class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Kill Switch + Stats -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Kill Switch -->
+                <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-xl p-6 text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold">🚨 Kill Switch</h2>
+                    </div>
+                    <p class="text-red-100 text-sm mb-6">
+                        Desliga TODOS os workflows imediatamente. Use apenas em emergência!
+                    </p>
+                    <button 
+                        @click="activateKillSwitch()"
+                        :disabled="killSwitchActive"
+                        class="kill-switch-btn w-full bg-white text-red-600 font-bold py-4 px-6 rounded-lg shadow-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <span x-show="!killSwitchActive">🔴 DESLIGAR TUDO</span>
+                        <span x-show="killSwitchActive" class="flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Desligando...
+                        </span>
+                    </button>
+                    <p class="text-xs text-red-100 mt-3 text-center">
+                        Você precisará reativar workflows manualmente
+                    </p>
+                </div>
+
+                <!-- Stats -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Estatísticas</h3>
+                    <dl class="space-y-3">
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-600">Total Workflows:</dt>
+                            <dd class="text-sm font-medium text-gray-900" x-text="stats.total_workflows || 0"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-600">Ativos:</dt>
+                            <dd class="text-sm font-medium text-green-600" x-text="stats.enabled_workflows || 0"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-600">Modo Auto:</dt>
+                            <dd class="text-sm font-medium text-orange-600" x-text="stats.auto_workflows || 0"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-600">Modo Manual:</dt>
+                            <dd class="text-sm font-medium text-blue-600" x-text="stats.manual_workflows || 0"></dd>
+                        </div>
+                        <hr class="my-2">
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-600">Total Execuções:</dt>
+                            <dd class="text-sm font-medium text-gray-900" x-text="stats.total_executions || 0"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-600">Total Ações:</dt>
+                            <dd class="text-sm font-medium text-gray-900" x-text="stats.total_actions || 0"></dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- AI Costs Monitor -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">💰 Custos de IA</h3>
+                    
+                    <!-- Loading -->
+                    <div x-show="costs.loading" class="text-center py-4">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600"></div>
+                    </div>
+
+                    <!-- Costs Data -->
+                    <div x-show="!costs.loading && costs.data" x-cloak>
+                        <!-- Progress Bar -->
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Gasto do mês</span>
+                                <span class="font-medium" 
+                                      :class="{
+                                          'text-green-600': costs.data.percent_used < 50,
+                                          'text-yellow-600': costs.data.percent_used >= 50 && costs.data.percent_used < 75,
+                                          'text-orange-600': costs.data.percent_used >= 75 && costs.data.percent_used < 90,
+                                          'text-red-600': costs.data.percent_used >= 90
+                                      }"
+                                      x-text="costs.data.percent_used + '%'">
+                                </span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div 
+                                    class="h-3 rounded-full transition-all duration-500"
+                                    :class="{
+                                        'bg-green-500': costs.data.percent_used < 50,
+                                        'bg-yellow-500': costs.data.percent_used >= 50 && costs.data.percent_used < 75,
+                                        'bg-orange-500': costs.data.percent_used >= 75 && costs.data.percent_used < 90,
+                                        'bg-red-500': costs.data.percent_used >= 90
+                                    }"
+                                    :style="`width: ${Math.min(costs.data.percent_used, 100)}%`">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Details -->
+                        <dl class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <dt class="text-gray-600">Gasto atual:</dt>
+                                <dd class="font-medium text-gray-900">R$ <span x-text="costs.data.current_cost_brl"></span></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-600">Budget:</dt>
+                                <dd class="font-medium text-gray-900">R$ <span x-text="costs.data.budget_brl"></span></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-600">Projeção mês:</dt>
+                                <dd class="font-medium" 
+                                    :class="parseFloat(costs.data.projected_total_brl) > costs.data.budget_brl ? 'text-red-600' : 'text-green-600'">
+                                    R$ <span x-text="costs.data.projected_total_brl"></span>
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <!-- Status Badge -->
+                        <div class="mt-4 text-center">
+                            <span 
+                                class="inline-block px-3 py-1 rounded-full text-xs font-medium"
+                                :class="{
+                                    'bg-green-100 text-green-800': costs.data.status === 'ok',
+                                    'bg-yellow-100 text-yellow-800': costs.data.status === 'caution',
+                                    'bg-orange-100 text-orange-800': costs.data.status === 'warning',
+                                    'bg-red-100 text-red-800': costs.data.status === 'critical'
+                                }"
+                                x-text="costs.data.status === 'ok' ? '✅ Tudo OK' : 
+                                        costs.data.status === 'caution' ? '🟡 Atenção' :
+                                        costs.data.status === 'warning' ? '🟠 Cuidado' : 
+                                        '🔴 Crítico'">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Workflows List -->
+            <div class="lg:col-span-2">
+                
+                <!-- Workflows -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-900">🔄 Workflows</h2>
+                        <p class="text-sm text-gray-600 mt-1">Ative ou desative workflows individualmente</p>
+                    </div>
+
+                    <!-- Workflows List -->
+                    <div class="divide-y divide-gray-200">
+                        <template x-for="workflow in workflows" :key="workflow.workflow_name">
+                            <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center space-x-3">
+                                            <!-- Toggle Switch -->
+                                            <div class="relative inline-block w-12 align-middle select-none">
+                                                <input 
+                                                    type="checkbox" 
+                                                    :id="'toggle-' + workflow.workflow_name"
+                                                    :checked="workflow.enabled"
+                                                    @change="toggleWorkflow(workflow)"
+                                                    class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-200"
+                                                    style="right: 1.5rem;"
+                                                />
+                                                <label 
+                                                    :for="'toggle-' + workflow.workflow_name" 
+                                                    class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-colors duration-200"
+                                                ></label>
+                                            </div>
+
+                                            <!-- Workflow Info -->
+                                            <div class="flex-1">
+                                                <h3 class="text-sm font-medium text-gray-900 flex items-center">
+                                                    <span x-text="workflow.workflow_name"></span>
+                                                    <!-- Status Badge -->
+                                                    <span 
+                                                        class="ml-2 px-2 py-0.5 text-xs rounded-full"
+                                                        :class="workflow.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'"
+                                                        x-text="workflow.enabled ? 'Ativo' : 'Inativo'">
+                                                    </span>
+                                                    <!-- Mode Badge -->
+                                                    <span 
+                                                        class="ml-1 px-2 py-0.5 text-xs rounded-full"
+                                                        :class="{
+                                                            'bg-blue-100 text-blue-800': workflow.automation_mode === 'manual',
+                                                            'bg-yellow-100 text-yellow-800': workflow.automation_mode === 'semi-auto',
+                                                            'bg-orange-100 text-orange-800': workflow.automation_mode === 'auto'
+                                                        }"
+                                                        x-text="workflow.automation_mode">
+                                                    </span>
+                                                </h3>
+                                                <p class="text-xs text-gray-500 mt-1" x-text="workflow.description"></p>
+                                                
+                                                <!-- Last Execution -->
+                                                <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                                    <span x-show="workflow.last_execution">
+                                                        Última exec: <span x-text="formatDate(workflow.last_execution)"></span>
+                                                    </span>
+                                                    <span>
+                                                        Execuções: <span x-text="workflow.total_executions || 0"></span>
+                                                    </span>
+                                                    <span x-show="workflow.total_actions > 0">
+                                                        Ações: <span x-text="workflow.total_actions"></span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="ml-4 flex items-center space-x-2">
+                                        <!-- Mode Selector -->
+                                        <select 
+                                            @change="changeMode(workflow, $event.target.value)"
+                                            class="text-sm border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
+                                            :disabled="!workflow.enabled"
+                                        >
+                                            <option value="manual" :selected="workflow.automation_mode === 'manual'">Manual</option>
+                                            <option value="semi-auto" :selected="workflow.automation_mode === 'semi-auto'">Semi-Auto</option>
+                                            <option value="auto" :selected="workflow.automation_mode === 'auto'">Auto</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Approval Required Warning -->
+                                <div x-show="workflow.requires_approval && workflow.automation_mode === 'manual'" class="mt-3 flex items-start">
+                                    <svg class="h-5 w-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <p class="text-xs text-yellow-700">Requer aprovação antes de executar qualquer ação</p>
+                                </div>
+
+                                <!-- Never Post Protection -->
+                                <div x-show="workflow.never_post" class="mt-2 flex items-start">
+                                    <svg class="h-5 w-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <p class="text-xs text-green-700">✅ Proteção Instagram: NUNCA posta automaticamente</p>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Empty State -->
+                        <div x-show="workflows.length === 0" class="px-6 py-12 text-center">
+                            <p class="text-gray-500">Nenhum workflow configurado</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Alpine.js Component -->
+    <script>
+        function automationsApp() {
+            return {
+                loading: true,
+                error: null,
+                workflows: [],
+                stats: {},
+                costs: {
+                    loading: true,
+                    data: null
+                },
+                killSwitchActive: false,
+
+                async init() {
+                    dayjs.extend(dayjs_plugin_relativeTime);
+                    dayjs.locale('pt-br');
+                    
+                    await this.loadWorkflows();
+                    await this.loadStats();
+                    await this.loadCosts();
+                },
+
+                async loadWorkflows() {
+                    try {
+                        this.loading = true;
+                        const response = await API.get('/automations');
+                        
+                        if (response.success) {
+                            this.workflows = response.workflows;
+                        } else {
+                            throw new Error(response.error || 'Erro ao carregar workflows');
+                        }
+                    } catch (err) {
+                        console.error('Error loading workflows:', err);
+                        this.error = err.message;
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async loadStats() {
+                    try {
+                        const response = await API.get('/automations/stats/overview');
+                        if (response.success) {
+                            this.stats = response.stats.workflows;
+                        }
+                    } catch (err) {
+                        console.error('Error loading stats:', err);
+                    }
+                },
+
+                async loadCosts() {
+                    try {
+                        this.costs.loading = true;
+                        const response = await API.get('/ai-costs/current-month');
+                        
+                        if (response.success) {
+                            this.costs.data = response;
+                        }
+                    } catch (err) {
+                        console.error('Error loading costs:', err);
+                    } finally {
+                        this.costs.loading = false;
+                    }
+                },
+
+                async toggleWorkflow(workflow) {
+                    try {
+                        const newState = !workflow.enabled;
+                        const response = await API.put(`/automations/${workflow.workflow_name}/toggle`, {
+                            enabled: newState
+                        });
+
+                        if (response.success) {
+                            workflow.enabled = newState;
+                            this.showToast(`Workflow ${newState ? 'ativado' : 'desativado'} com sucesso!`);
+                            await this.loadStats();
+                        } else {
+                            throw new Error(response.error);
+                        }
+                    } catch (err) {
+                        console.error('Error toggling workflow:', err);
+                        alert('Erro ao alterar workflow: ' + err.message);
+                        // Revert UI
+                        await this.loadWorkflows();
+                    }
+                },
+
+                async changeMode(workflow, newMode) {
+                    try {
+                        const response = await API.put(`/automations/${workflow.workflow_name}/mode`, {
+                            automation_mode: newMode
+                        });
+
+                        if (response.success) {
+                            workflow.automation_mode = newMode;
+                            this.showToast(`Modo alterado para ${newMode}!`);
+                        } else {
+                            throw new Error(response.error);
+                        }
+                    } catch (err) {
+                        console.error('Error changing mode:', err);
+                        alert('Erro ao alterar modo: ' + err.message);
+                        await this.loadWorkflows();
+                    }
+                },
+
+                async activateKillSwitch() {
+                    if (!confirm('⚠️ TEM CERTEZA? Isso vai DESLIGAR TODOS os workflows!\n\nVocê precisará reativá-los manualmente um por um.\n\nUse apenas em EMERGÊNCIA!')) {
+                        return;
+                    }
+
+                    if (!confirm('Confirmação final: DESLIGAR TUDO?')) {
+                        return;
+                    }
+
+                    try {
+                        this.killSwitchActive = true;
+                        const response = await API.post('/automations/kill-switch');
+
+                        if (response.success) {
+                            alert(`✅ Kill Switch ativado!\n\n${response.disabled_count} workflows desligados.\n\nWorkflows desligados:\n${response.disabled_workflows.join('\n')}`);
+                            await this.loadWorkflows();
+                            await this.loadStats();
+                        } else {
+                            throw new Error(response.error);
+                        }
+                    } catch (err) {
+                        console.error('Error activating kill switch:', err);
+                        alert('Erro ao ativar kill switch: ' + err.message);
+                    } finally {
+                        this.killSwitchActive = false;
+                    }
+                },
+
+                formatDate(dateString) {
+                    if (!dateString) return 'Nunca';
+                    return dayjs(dateString).fromNow();
+                },
+
+                showToast(message) {
+                    // Simple toast notification
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                    toast.textContent = message;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                },
+
+                logout() {
+                    Auth.logout();
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>
+

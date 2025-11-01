@@ -1,0 +1,174 @@
+{
+  "name": "08 - Análise Preditiva de Métricas",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 19 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger (Daily 19:00)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/analise-preditiva",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "check-enabled",
+      "name": "Check if Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.workflow.enabled}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-enabled",
+      "name": "If Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  date,\n  ctr,\n  cpc,\n  cpm,\n  new_followers,\n  cost,\n  impressions,\n  clicks\nFROM metrics\nWHERE date >= CURRENT_DATE - INTERVAL '30 days'\nORDER BY date ASC",
+        "options": {}
+      },
+      "id": "get-last-30-days",
+      "name": "Get Last 30 Days Metrics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [850, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate trends and predictions\nconst metrics = $input.all();\n\nif (metrics.length < 7) {\n  throw new Error('Dados insuficientes (mínimo 7 dias)');\n}\n\n// Calculate averages and trends\nconst calculateTrend = (data, key) => {\n  const values = data.map(d => parseFloat(d.json[key]) || 0).filter(v => v > 0);\n  if (values.length < 2) return { avg: 0, trend: 0 };\n  \n  const avg = values.reduce((a, b) => a + b, 0) / values.length;\n  \n  // Simple linear regression for trend\n  const half = Math.floor(values.length / 2);\n  const firstHalf = values.slice(0, half);\n  const secondHalf = values.slice(half);\n  \n  const avgFirst = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;\n  const avgSecond = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;\n  \n  const trend = ((avgSecond - avgFirst) / avgFirst) * 100; // % change\n  \n  return { avg: avg.toFixed(2), trend: trend.toFixed(1) };\n};\n\nconst ctrAnalysis = calculateTrend(metrics, 'ctr');\nconst cpcAnalysis = calculateTrend(metrics, 'cpc');\nconst followersAnalysis = calculateTrend(metrics, 'new_followers');\n\n// Predict next 7 days (simple projection)\nconst predictions = {\n  ctr: {\n    current_avg: ctrAnalysis.avg,\n    trend: ctrAnalysis.trend,\n    predicted_7d: (parseFloat(ctrAnalysis.avg) * (1 + parseFloat(ctrAnalysis.trend) / 100)).toFixed(2)\n  },\n  cpc: {\n    current_avg: cpcAnalysis.avg,\n    trend: cpcAnalysis.trend,\n    predicted_7d: (parseFloat(cpcAnalysis.avg) * (1 + parseFloat(cpcAnalysis.trend) / 100)).toFixed(2)\n  },\n  followers: {\n    current_avg: followersAnalysis.avg,\n    trend: followersAnalysis.trend,\n    predicted_7d: Math.round(parseFloat(followersAnalysis.avg) * (1 + parseFloat(followersAnalysis.trend) / 100))\n  }\n};\n\n// Identify risks\nconst risks = [];\nif (parseFloat(ctrAnalysis.trend) < -10) risks.push('CTR caindo (-' + Math.abs(ctrAnalysis.trend) + '%)');\nif (parseFloat(cpcAnalysis.trend) > 15) risks.push('CPC aumentando (+' + cpcAnalysis.trend + '%)');\nif (parseFloat(followersAnalysis.trend) < -20) risks.push('Crescimento desacelerando');\n\nreturn [{\n  json: {\n    predictions: predictions,\n    risks: risks,\n    data_points: metrics.length,\n    period: '30_days'\n  }\n}];"
+      },
+      "id": "calculate-predictions",
+      "name": "Calculate Predictions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst predictions = data.predictions;\nconst risks = data.risks;\n\nlet message = `📊 ANÁLISE PREDITIVA - Próximos 7 dias\\n\\n`;\n\n// CTR\nmessage += `📈 CTR (Click-Through Rate)\\n`;\nmessage += `   Atual: ${predictions.ctr.current_avg}%\\n`;\nmessage += `   Tendência: ${predictions.ctr.trend > 0 ? '↗️' : '↘️'} ${predictions.ctr.trend}%\\n`;\nmessage += `   Previsão 7d: ${predictions.ctr.predicted_7d}%\\n\\n`;\n\n// CPC\nmessage += `💰 CPC (Custo Por Clique)\\n`;\nmessage += `   Atual: R$ ${predictions.cpc.current_avg}\\n`;\nmessage += `   Tendência: ${predictions.cpc.trend > 0 ? '↗️' : '↘️'} ${predictions.cpc.trend}%\\n`;\nmessage += `   Previsão 7d: R$ ${predictions.cpc.predicted_7d}\\n\\n`;\n\n// Followers\nmessage += `👥 Novos Seguidores/Dia\\n`;\nmessage += `   Atual: ${predictions.followers.current_avg}\\n`;\nmessage += `   Tendência: ${predictions.followers.trend > 0 ? '↗️' : '↘️'} ${predictions.followers.trend}%\\n`;\nmessage += `   Previsão 7d: ${predictions.followers.predicted_7d}/dia\\n\\n`;\n\n// Risks\nif (risks.length > 0) {\n  message += `⚠️ RISCOS IDENTIFICADOS:\\n`;\n  risks.forEach(risk => {\n    message += `   - ${risk}\\n`;\n  });\n  message += `\\n`;\n} else {\n  message += `✅ Nenhum risco identificado\\n\\n`;\n}\n\nmessage += `📅 Baseado em ${data.data_points} dias de dados`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-report",
+      "name": "Build Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.EVOLUTION_API_URL}}/message/sendText/={{$env.EVOLUTION_INSTANCE}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$env.WHATSAPP_NUMBER}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json.message}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp-report",
+      "name": "Send WhatsApp Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1450, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "Evolution API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/automations/log-execution/analise-preditiva",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "log-execution-final",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "API Auth"
+        }
+      }
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "IA",
+      "id": "1"
+    },
+    {
+      "name": "Análise",
+      "id": "2"
+    },
+    {
+      "name": "Semi-Auto",
+      "id": "3"
+    }
+  ],
+  "meta": {
+    "instanceId": "sabrina-costa-dashboard"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "active": false
+}
+

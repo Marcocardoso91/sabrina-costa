@@ -21,19 +21,55 @@ n8n/
 
 ## 🚀 Workflows Disponíveis
 
-### Production (Ativos)
+### Grupo 1: Workflows Básicos (Ativos)
 
-| # | Nome | Trigger | Frequência | Descrição |
-|---|------|---------|------------|-----------|
-| 01 | Processar Métricas | Webhook | On-demand | Recebe e processa métricas CSV/JSON |
-| 02 | Alertas WhatsApp | Cron | 18:00 diário | Envia alertas de métricas |
-| 03 | Relatório Diário | Cron | 18:05 diário | Compila e envia relatório |
-| 04 | Lembretes Postagem | Cron | 11:00, 17:30 | Lembra posts do dia |
-| 05 | Backup Dados | Cron | 02:00 diário | Backup automático |
-| 06 | Health Check | Cron | A cada 15 min | Monitora saúde do sistema |
-| 07 | Relatório Semanal | Cron | Segunda 09:00 | Relatório semanal completo |
-| 08 | Limpeza Dados | Cron | 1º do mês 03:00 | Arquiva dados antigos |
-| 09 | Sync Google Sheets | Cron | 08:00 diário | Sincroniza com planilha |
+| # | Nome | Trigger | Frequência | Status | Descrição |
+|---|------|---------|------------|--------|-----------|
+| 01 | Processar Métricas | Webhook | On-demand | ✅ Ativo | Recebe e processa métricas CSV/JSON |
+| 02 | Alertas WhatsApp | Cron | 18:00 diário | ✅ Ativo | Envia alertas de métricas |
+| 03 | Relatório Diário | Cron | 18:05 diário | ✅ Ativo | Compila e envia relatório |
+| 04 | Lembretes Postagem | Cron | 11:00, 17:30 | ✅ Ativo | Lembra posts do dia |
+
+### Grupo 2: Workflows IA - Campanhas (Desligados - Requer Aprovação)
+
+| # | Nome | Trigger | Frequência | Status | Modo | Descrição |
+|---|------|---------|------------|--------|------|-----------|
+| 05 | Otimizar Campanhas | Cron | A cada 2h | ❌ Inativo | Manual | Analisa Meta Ads e sugere otimizações |
+
+**Proteção:** 
+- ✅ APENAS NOTIFICA (não pausa nada automaticamente)
+- ✅ Requer aprovação para cada ação
+- ✅ Modo manual por padrão
+
+### Grupo 3: Workflows IA - Conteúdo (Desligados - Requer Aprovação)
+
+| # | Nome | Trigger | Frequência | Status | Modo | Descrição |
+|---|------|---------|------------|--------|------|-----------|
+| 06 | Gerar Legendas IA | Webhook | On-demand | ❌ Inativo | Manual | Gera legendas com IA (Gemini/ChatGPT/Claude) |
+| 07 | Recomendar Conteúdo | Cron | Diário 08:00 | ❌ Inativo | Manual | Recomenda temas baseado em análise |
+| 08 | Análise Preditiva | Cron | Diário 19:00 | ❌ Inativo | Semi-Auto | Prevê métricas próximos 7 dias |
+| 10 | Dicas Produtos IA | Webhook | On-demand | ❌ Inativo | Manual | Gera dicas de produtos com IA Vision |
+| 11 | Análise Comentários | Cron | Diário 20:00 | ❌ Inativo | Semi-Auto | Sentiment analysis dos comentários |
+
+**Proteção:**
+- ✅ NUNCA posta automaticamente
+- ✅ Sempre pede aprovação
+- ✅ Você revisa tudo antes
+- ✅ Zero risco Instagram
+
+### Grupo 4: Workflows de Tracking (Desligados - Seguros)
+
+| # | Nome | Trigger | Frequência | Status | Modo | Descrição |
+|---|------|---------|------------|--------|------|-----------|
+| 09 | Reels Fund Tracker | Cron | A cada 6h | ❌ Inativo | Auto | Monitora progresso meta 900 seguidores |
+| 12 | Busca Semanal Validação | Cron | Segunda 09:00 | ❌ Inativo | Auto | Valida plano com Exa Search + Claude |
+| 13 | Monitor Custos IA | Cron | Diário 08:00 | ❌ Inativo | Auto | Controla gastos IA (alertas 50%/75%/90%) |
+
+**Proteção:**
+- ✅ Apenas leitura (não modificam nada)
+- ✅ Zero risco
+- ✅ 100% seguros
+- ✅ Podem ficar em modo auto
 
 ## 🛠️ Templates Reutilizáveis
 
@@ -172,6 +208,77 @@ curl -X POST https://fluxos.macspark.dev/webhook/sabrina/metricas \
   -d '{"date":"2025-10-23","ctr":7.5,"cpc":0.09,...}'
 ```
 
+## 🤖 Workflows com IA (Novos)
+
+### ⚠️ IMPORTANTE: Segurança e Controle
+
+**Todos workflows com IA seguem princípios rígidos de segurança:**
+
+1. ❌ NUNCA postam automaticamente no Instagram
+2. ❌ NUNCA pausam campanhas sem aprovação
+3. ✅ SEMPRE modo manual por padrão
+4. ✅ SEMPRE pedem aprovação antes de ações
+5. ✅ SEMPRE controlam custos (max R$ 50/mês)
+
+### Configuração dos Workflows IA
+
+**ANTES de ativar qualquer workflow IA:**
+
+1. Ler documentação: `docs/automations/MANUAL-AUTOMACOES.md`
+2. Ler segurança: `docs/automations/SEGURANCA-INSTAGRAM.md`
+3. Configurar APIs: `docs/automations/CONFIGURAR-APIS.md`
+4. Ativar Monitor Custos PRIMEIRO
+5. Testar em modo manual
+
+### Como Usar Workflows IA
+
+**Exemplo: Gerar Legenda**
+
+```bash
+# 1. Ativar workflow via frontend
+# configuracoes-automacao.html > Toggle "gerar-legendas" ON
+
+# 2. Enviar comando WhatsApp
+/legenda Minha rotina de skincare matinal
+
+# 3. Aguardar legenda (15-30s)
+
+# 4. Revisar e aprovar
+/aprovar-leg-123
+
+# 5. Copiar manualmente para Instagram
+# (NUNCA posta automaticamente!)
+```
+
+### APIs Necessárias
+
+Para workflows IA funcionarem:
+
+**Essencial (Configurar agora):**
+- Gemini Pro API (Google) - R$ 0 (grátis)
+- Evolution API (WhatsApp) - ✅ Já configurado
+
+**Opcional (Configurar depois):**
+- Meta Ads API - Para workflow 05
+- Instagram Graph API - Para workflow 09
+- Claude API ou ChatGPT API - Backup
+
+**Ver:** `docs/automations/CONFIGURAR-APIS.md`
+
+### Custo Estimado
+
+**Total esperado: R$ 0-5/mês** ✅
+
+Detalhes:
+- Gemini Pro: R$ 0 (grátis)
+- ChatGPT Pro: R$ 0 (já assinado)
+- Claude Pro: R$ 0 (já assinado)
+- OpenAI API (backup): ~R$ 2-5/mês
+
+**Proteção:** Auto-pause em 90% do budget (R$ 45)
+
+---
+
 ## 🛡️ Boas Práticas
 
 ### Segurança
@@ -180,6 +287,8 @@ curl -X POST https://fluxos.macspark.dev/webhook/sabrina/metricas \
 - ✅ Nunca hardcodar tokens/senhas
 - ✅ Validar input em todos webhooks
 - ✅ Implementar rate limiting
+- ✅ NUNCA ativar modo auto sem testar muito
+- ✅ Sempre ter kill switch disponível
 
 ### Performance
 

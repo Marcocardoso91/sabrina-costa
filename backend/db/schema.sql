@@ -350,6 +350,225 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =====================================================
+-- TABLE: automation_controls
+-- Descrição: Controle de workflows e automações N8N
+-- =====================================================
+CREATE TABLE IF NOT EXISTS automation_controls (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    workflow_name VARCHAR(100) UNIQUE NOT NULL,
+    workflow_id VARCHAR(50), -- ID do workflow no n8n (se aplicável)
+    enabled BOOLEAN DEFAULT FALSE, -- Workflow ativo/inativo
+    automation_mode VARCHAR(50) DEFAULT 'manual' CHECK (automation_mode IN ('manual', 'semi-auto', 'auto')),
+    requires_approval BOOLEAN DEFAULT TRUE, -- Requer aprovação antes de executar ações
+    auto_execute BOOLEAN DEFAULT FALSE, -- Se TRUE, executa automaticamente (perigoso)
+    never_post BOOLEAN DEFAULT TRUE, -- Proteção Instagram: nunca postar automaticamente
+    use_free_ai_first BOOLEAN DEFAULT TRUE, -- Priorizar APIs gratuitas
+    last_execution TIMESTAMP, -- Última execução do workflow
+    last_action TIMESTAMP, -- Última ação executada (após aprovação)
+    total_executions INTEGER DEFAULT 0, -- Total de execuções
+    total_actions INTEGER DEFAULT 0, -- Total de ações executadas
+    config JSONB, -- Configurações específicas do workflow
+    description TEXT, -- Descrição do workflow
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Índices
+CREATE INDEX idx_automation_controls_enabled ON automation_controls(enabled);
+CREATE INDEX idx_automation_controls_mode ON automation_controls(automation_mode);
+CREATE INDEX idx_automation_controls_name ON automation_controls(workflow_name);
+
+-- Seed automation controls (todos desligados por padrão - SEGURANÇA)
+INSERT INTO automation_controls (workflow_name, automation_mode, requires_approval, auto_execute, never_post, description) VALUES
+('processar-metricas', 'auto', FALSE, TRUE, TRUE, 'Workflow básico: processar métricas recebidas via webhook'),
+('alertas-whatsapp', 'auto', FALSE, TRUE, TRUE, 'Workflow básico: enviar alertas quando métricas fora do padrão'),
+('relatorio-diario', 'auto', FALSE, TRUE, TRUE, 'Workflow básico: gerar relatório diário automaticamente'),
+('lembrete-postagem', 'auto', FALSE, TRUE, TRUE, 'Workflow básico: lembrete de postagem via WhatsApp'),
+('otimizar-campanhas', 'manual', TRUE, FALSE, TRUE, 'IA: Analisar campanhas e sugerir otimizações (APENAS NOTIFICAR)'),
+('gerar-legendas', 'manual', TRUE, FALSE, TRUE, 'IA: Gerar legendas com IA (APROVAÇÃO OBRIGATÓRIA)'),
+('recomendar-conteudo', 'manual', TRUE, FALSE, TRUE, 'IA: Recomendar temas de conteúdo baseado em análise'),
+('analise-preditiva', 'semi-auto', FALSE, FALSE, TRUE, 'IA: Análise preditiva de métricas (próximos 7 dias)'),
+('reels-fund-tracker', 'auto', FALSE, TRUE, TRUE, 'Tracking: Monitorar progresso meta 900 seguidores (SEGURO)'),
+('dicas-produtos', 'manual', TRUE, FALSE, TRUE, 'IA: Gerar dicas de produtos com IA Vision'),
+('analise-comentarios', 'semi-auto', FALSE, FALSE, TRUE, 'IA: Análise de sentimento dos comentários'),
+('busca-semanal-validacao', 'auto', FALSE, TRUE, TRUE, 'IA: Busca semanal para validar plano estratégico'),
+('monitorar-custos-ia', 'auto', FALSE, TRUE, TRUE, 'Monitor: Controlar custos de IA e alertar thresholds')
+ON CONFLICT (workflow_name) DO NOTHING;
+
+-- =====================================================
+-- TABLE: approval_queue
+-- Descrição: Fila de aprovações para ações de automação
+-- =====================================================
+CREATE TABLE IF NOT EXISTS approval_queue (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    workflow_name VARCHAR(100) NOT NULL,
+    action_type VARCHAR(50) NOT NULL, -- 'pause_campaign', 'post_content', 'send_message', 'update_budget'
+    action_data JSONB NOT NULL, -- Detalhes completos da ação proposta
+    reason TEXT, -- Por que esta ação foi sugerida
+    impact TEXT, -- Impacto esperado (ex: "Economia R$ 20/dia")
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'expired', 'executed')),
+    priority VARCHAR(20) DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
+    expires_at TIMESTAMP, -- Tempo limite para decisão (default 24h)
+    approved_at TIMESTAMP,
+    rejected_at TIMESTAMP,
+    executed_at TIMESTAMP,
+    approved_by UUID REFERENCES users(id),
+    rejection_reason TEXT, -- Motivo da rejeição (se aplicável)
+    execution_result JSONB, -- Resultado da execução (sucesso/erro)
+    notified_via VARCHAR(50) DEFAULT 'whatsapp', -- Como foi notificado: whatsapp, email, frontend
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Índices
+CREATE INDEX idx_approval_queue_status ON approval_queue(status);
+CREATE INDEX idx_approval_queue_workflow ON approval_queue(workflow_name);
+CREATE INDEX idx_approval_queue_priority ON approval_queue(priority);
+CREATE INDEX idx_approval_queue_expires_at ON approval_queue(expires_at);
+CREATE INDEX idx_approval_queue_created_at ON approval_queue(created_at DESC);
+
+-- Função para expirar aprovações automaticamente
+CREATE OR REPLACE FUNCTION expire_old_approvals()
+RETURNS void AS $$
+BEGIN
+    UPDATE approval_queue
+    SET status = 'expired', updated_at = NOW()
+    WHERE status = 'pending' 
+    AND expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- TABLE: ai_usage_tracking
+-- Descrição: Rastreamento de uso e custos de APIs de IA
+-- =====================================================
+CREATE TABLE IF NOT EXISTS ai_usage_tracking (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    service VARCHAR(50) NOT NULL, -- 'openai', 'claude', 'gemini', 'openrouter', 'local-vps'
+    model VARCHAR(100), -- 'gpt-4o', 'claude-3.5-sonnet', 'gemini-pro', 'llama-3.1-70b'
+    workflow_name VARCHAR(100), -- Qual workflow usou
+    operation VARCHAR(100), -- 'generate_caption', 'analyze_sentiment', 'predict_metrics'
+    tokens_input INTEGER, -- Tokens de entrada
+    tokens_output INTEGER, -- Tokens de saída
+    tokens_total INTEGER, -- Total de tokens
+    cost_brl DECIMAL(10,4), -- Custo em reais
+    is_free BOOLEAN DEFAULT FALSE, -- Se foi usando tier gratuito/assinatura
+    response_time_ms INTEGER, -- Tempo de resposta em ms
+    success BOOLEAN DEFAULT TRUE, -- Se a chamada foi bem-sucedida
+    error_message TEXT, -- Mensagem de erro (se falhou)
+    date DATE DEFAULT CURRENT_DATE, -- Data da operação
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Índices
+CREATE INDEX idx_ai_usage_service ON ai_usage_tracking(service);
+CREATE INDEX idx_ai_usage_workflow ON ai_usage_tracking(workflow_name);
+CREATE INDEX idx_ai_usage_date ON ai_usage_tracking(date DESC);
+CREATE INDEX idx_ai_usage_is_free ON ai_usage_tracking(is_free);
+CREATE INDEX idx_ai_usage_created_at ON ai_usage_tracking(created_at DESC);
+
+-- View: Custos mensais por serviço
+CREATE OR REPLACE VIEW ai_costs_monthly AS
+SELECT 
+    DATE_TRUNC('month', date) as month,
+    service,
+    COUNT(*) as total_calls,
+    SUM(tokens_total) as total_tokens,
+    SUM(cost_brl) as total_cost_brl,
+    SUM(CASE WHEN is_free THEN 1 ELSE 0 END) as free_calls,
+    SUM(CASE WHEN NOT is_free THEN 1 ELSE 0 END) as paid_calls,
+    AVG(response_time_ms) as avg_response_time_ms
+FROM ai_usage_tracking
+GROUP BY DATE_TRUNC('month', date), service
+ORDER BY month DESC, total_cost_brl DESC;
+
+-- View: Custos do mês atual
+CREATE OR REPLACE VIEW ai_costs_current_month AS
+SELECT 
+    service,
+    COUNT(*) as calls,
+    SUM(tokens_total) as tokens,
+    SUM(cost_brl) as cost_brl,
+    SUM(CASE WHEN is_free THEN cost_brl ELSE 0 END) as free_cost,
+    SUM(CASE WHEN NOT is_free THEN cost_brl ELSE 0 END) as paid_cost
+FROM ai_usage_tracking
+WHERE DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)
+GROUP BY service;
+
+-- Inserir configuração de budget IA
+INSERT INTO config (key, value) VALUES
+('ai_budget_monthly_brl', '50.00'::jsonb),
+('ai_alert_threshold_50', 'true'::jsonb),
+('ai_alert_threshold_75', 'true'::jsonb),
+('ai_auto_pause_threshold_90', 'true'::jsonb),
+('ai_prefer_free_tiers', 'true'::jsonb),
+('ai_use_vps_models', 'true'::jsonb)
+ON CONFLICT (key) DO NOTHING;
+
+-- =====================================================
+-- TABLE: weekly_plan_updates
+-- Descrição: Mudanças detectadas na busca semanal de validação
+-- =====================================================
+CREATE TABLE IF NOT EXISTS weekly_plan_updates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    week_start DATE NOT NULL, -- Segunda-feira da semana
+    week_end DATE NOT NULL, -- Domingo da semana
+    has_changes BOOLEAN DEFAULT FALSE, -- Se foram detectadas mudanças relevantes
+    urgency VARCHAR(20) CHECK (urgency IN ('baixa', 'media', 'alta')), -- Urgência das mudanças
+    summary TEXT, -- Resumo das descobertas
+    changes_detected JSONB, -- Array de mudanças detectadas
+    recommendations JSONB, -- Array de recomendações
+    impact VARCHAR(20) CHECK (impact IN ('positivo', 'negativo', 'neutro')), -- Impacto nas metas
+    sources JSONB, -- URLs e fontes das descobertas
+    ai_analysis TEXT, -- Análise completa gerada pela IA
+    plan_diff TEXT, -- Diff do master-plan.md (se atualizado)
+    notified_at TIMESTAMP, -- Quando foi notificado via WhatsApp
+    user_feedback TEXT, -- Feedback do usuário sobre as recomendações
+    applied_changes JSONB, -- Quais mudanças foram aplicadas
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Índices
+CREATE INDEX idx_weekly_plan_week_start ON weekly_plan_updates(week_start DESC);
+CREATE INDEX idx_weekly_plan_has_changes ON weekly_plan_updates(has_changes);
+CREATE INDEX idx_weekly_plan_urgency ON weekly_plan_updates(urgency);
+
+-- =====================================================
+-- TABLE: content_generated
+-- Descrição: Conteúdo gerado por IA (legendas, dicas, etc)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS content_generated (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    type VARCHAR(50) NOT NULL CHECK (type IN ('legenda', 'dica_produto', 'recomendacao', 'story_idea')),
+    theme VARCHAR(255), -- Tema/tópico do conteúdo
+    content TEXT NOT NULL, -- Conteúdo gerado
+    status VARCHAR(20) DEFAULT 'pending_approval' CHECK (status IN ('pending_approval', 'approved', 'rejected', 'posted')),
+    ai_service VARCHAR(50), -- 'gemini', 'chatgpt', 'claude', etc
+    model VARCHAR(100), -- Nome do modelo usado
+    tokens_used INTEGER, -- Tokens gastos
+    cost_brl DECIMAL(10,4), -- Custo em reais
+    is_free BOOLEAN DEFAULT TRUE, -- Se foi usando tier gratuito
+    approved_by UUID REFERENCES users(id),
+    approved_at TIMESTAMP,
+    rejected_at TIMESTAMP,
+    rejection_reason TEXT,
+    posted_at TIMESTAMP, -- Quando foi postado (manualmente)
+    posted_url VARCHAR(255), -- URL do post no Instagram
+    engagement_data JSONB, -- Dados de engagement (se postado)
+    metadata JSONB, -- Dados extras (hashtags, CTAs, etc)
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Índices
+CREATE INDEX idx_content_generated_type ON content_generated(type);
+CREATE INDEX idx_content_generated_status ON content_generated(status);
+CREATE INDEX idx_content_generated_created_at ON content_generated(created_at DESC);
+CREATE INDEX idx_content_generated_ai_service ON content_generated(ai_service);
+CREATE INDEX idx_content_generated_approved_by ON content_generated(approved_by);
+
+-- =====================================================
 -- COMMENTS
 -- =====================================================
 COMMENT ON TABLE users IS 'Usuários do sistema com autenticação';
@@ -358,6 +577,11 @@ COMMENT ON TABLE alerts IS 'Histórico de alertas enviados via WhatsApp';
 COMMENT ON TABLE posts IS 'Cronograma de posts planejados (4 semanas)';
 COMMENT ON TABLE hooks IS 'Biblioteca de ganchos virais para Reels';
 COMMENT ON TABLE config IS 'Configurações gerais do sistema';
+COMMENT ON TABLE automation_controls IS 'Controle de workflows e automações N8N com IA';
+COMMENT ON TABLE approval_queue IS 'Fila de aprovações para ações de automação';
+COMMENT ON TABLE ai_usage_tracking IS 'Rastreamento de uso e custos de APIs de IA';
+COMMENT ON TABLE weekly_plan_updates IS 'Mudanças detectadas na busca semanal de validação do plano';
+COMMENT ON TABLE content_generated IS 'Conteúdo gerado por IA (legendas, dicas) - NUNCA posta automaticamente';
 
 -- =====================================================
 -- GRANTS (ajustar conforme necessário)
