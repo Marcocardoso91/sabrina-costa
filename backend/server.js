@@ -41,7 +41,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.text({ type: 'text/csv', limit: '10mb' }));
 
-// Rate limiting
+// Rate limiting - General API
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60000, // 1 minute
     max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
@@ -51,9 +51,22 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Request logging
+// Strict rate limiting for authentication endpoints (brute-force protection)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Max 5 login attempts per 15 minutes
+    message: { success: false, error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true, // Don't count successful logins
+});
+app.use('/api/auth/login', authLimiter);
+
+// Request logging (only in development)
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    if (process.env.NODE_ENV !== 'production') {
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    }
     next();
 });
 
@@ -126,22 +139,26 @@ async function startServer() {
         
         // Start listening
         app.listen(PORT, () => {
-            console.log('');
-            console.log('═══════════════════════════════════════');
-            console.log('  🌟 Dashboard Sabrina Costa API');
-            console.log('═══════════════════════════════════════');
-            console.log(`  📡 Servidor rodando em http://localhost:${PORT}`);
-            console.log(`  🗄️  Banco de dados: ${dbConnected ? '✓ Conectado' : '✗ Desconectado'}`);
-            console.log(`  🔒 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-            console.log('═══════════════════════════════════════');
-            console.log('');
-            console.log('  📖 Endpoints disponíveis:');
-            console.log('     GET  /api/health');
-            console.log('     POST /api/auth/login');
-            console.log('     GET  /api/metrics');
-            console.log('     POST /api/metrics');
-            console.log('     POST /api/webhook/metrics');
-            console.log('');
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('');
+                console.log('═══════════════════════════════════════');
+                console.log('  🌟 Dashboard Sabrina Costa API');
+                console.log('═══════════════════════════════════════');
+                console.log(`  📡 Servidor rodando em http://localhost:${PORT}`);
+                console.log(`  🗄️  Banco de dados: ${dbConnected ? '✓ Conectado' : '✗ Desconectado'}`);
+                console.log(`  🔒 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+                console.log('═══════════════════════════════════════');
+                console.log('');
+                console.log('  📖 Endpoints disponíveis:');
+                console.log('     GET  /api/health');
+                console.log('     POST /api/auth/login');
+                console.log('     GET  /api/metrics');
+                console.log('     POST /api/metrics');
+                console.log('     POST /api/webhook/metrics');
+                console.log('');
+            } else {
+                console.log(`[${new Date().toISOString()}] Server started on port ${PORT}`);
+            }
         });
         
     } catch (error) {

@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://backend-mgw4xh04p-marcocardoso28s-projects.vercel.app/api/$1"
+      "destination": "https://sabrina-costa-backend.vercel.app/api/$1"
     }
   ],
   "redirects": [

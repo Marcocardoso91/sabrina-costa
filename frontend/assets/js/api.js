@@ -4,7 +4,7 @@
 const API_CONFIG = {
     baseURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000/api'
-        : 'https://sabrina-costa-aixs.vercel.app/api',
+        : '/api', // Use relative URL for production (proxied via vercel.json)
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json'

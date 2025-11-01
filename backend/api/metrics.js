@@ -34,6 +34,13 @@ router.get('/', async (req, res, next) => {
         // Filter by period (7d, 30d, 90d)
         if (period && !startDate && !endDate) {
             const days = parseInt(period.replace('d', ''));
+            // Validate days to prevent SQL injection (max 365 days)
+            if (isNaN(days) || days < 1 || days > 365) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Período inválido. Use formato: 7d, 30d, 90d (máx: 365d)'
+                });
+            }
             sql += ` AND date >= CURRENT_DATE - INTERVAL '${days} days'`;
         }
         
@@ -64,6 +71,7 @@ router.get('/', async (req, res, next) => {
         }
         if (period && !startDate && !endDate) {
             const days = parseInt(period.replace('d', ''));
+            // days already validated above
             countSql += ` AND date >= CURRENT_DATE - INTERVAL '${days} days'`;
         }
         if (startDate) {
@@ -282,6 +290,14 @@ router.get('/summary', async (req, res, next) => {
     try {
         const { period = '30d' } = req.query;
         const days = parseInt(period.replace('d', ''));
+        
+        // Validate days to prevent SQL injection (max 365 days)
+        if (isNaN(days) || days < 1 || days > 365) {
+            return res.status(400).json({
+                success: false,
+                error: 'Período inválido. Use formato: 7d, 30d, 90d (máx: 365d)'
+            });
+        }
         
         const result = await query(`
             SELECT 

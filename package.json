@@ -1,7 +1,22 @@
 {
-  "dependencies": {
-    "@supabase/supabase-js": "^2.76.1",
-    "bcryptjs": "^3.0.2",
-    "pg": "^8.16.3"
-  }
+  "name": "sabrina-costa-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dashboard Sabrina Costa - Monorepo",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "test:backend": "cd backend && npm test",
+    "start:backend": "cd backend && npm start",
+    "setup:db": "node ../scripts/setup/setup-new-supabase.js",
+    "setup:admin": "node ../scripts/setup/create-admin-user.js",
+    "test:db": "node ../scripts/test/test-database-connection.js"
+  },
+  "keywords": ["dashboard", "instagram", "automation", "n8n"],
+  "author": "Macspark",
+  "license": "UNLICENSED"
 }

@@ -17,9 +17,11 @@ const pool = new Pool({
     connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
 });
 
-// Log connection
+// Log connection (only in development)
 pool.on('connect', () => {
-    console.log('✓ Connected to PostgreSQL database');
+    if (process.env.NODE_ENV !== 'production') {
+        console.log('✓ Connected to PostgreSQL database');
+    }
 });
 
 // Log errors
@@ -33,7 +35,9 @@ async function testConnection() {
     try {
         const client = await pool.connect();
         const result = await client.query('SELECT NOW()');
-        console.log('✓ Database connection test successful:', result.rows[0].now);
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('✓ Database connection test successful:', result.rows[0].now);
+        }
         client.release();
         return true;
     } catch (error) {
@@ -48,7 +52,10 @@ async function query(text, params) {
     try {
         const res = await pool.query(text, params);
         const duration = Date.now() - start;
-        console.log('Executed query', { text, duration, rows: res.rowCount });
+        // Only log slow queries in development (> 1000ms)
+        if (process.env.NODE_ENV !== 'production' && duration > 1000) {
+            console.log('Slow query detected', { duration, rows: res.rowCount });
+        }
         return res;
     } catch (error) {
         console.error('Query error:', { text, error: error.message });
