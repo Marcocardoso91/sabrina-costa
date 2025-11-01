@@ -162,7 +162,8 @@ const API = {
 
     // Config
     config: {
-        getAll: () => api.get('/config')
+        getAll: () => api.get('/config'),
+        update: (data) => api.put('/config', data)
     }
 };
 
@@ -171,4 +172,3 @@ if (typeof window !== 'undefined') {
     window.API = API;
     window.api = api;
 }
-

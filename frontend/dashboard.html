@@ -338,9 +338,10 @@
                     try {
                         // Load real data from API
                         const response = await API.metrics.getAll({ period: this.period });
+                        const rows = Array.isArray(response?.data) ? [...response.data] : [];
                         
                         // Backend returns DESC order, reverse to ASC for proper trend calculation
-                        this.metricsData = response.data.reverse();
+                        this.metricsData = rows.reverse();
                         
                         // Fallback to mock if no data
                         if (this.metricsData.length === 0) {
