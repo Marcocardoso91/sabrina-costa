@@ -9,7 +9,7 @@ const { authenticateJWT, requireAdmin } = require('../utils/jwt');
 const router = express.Router();
 
 // Debug endpoint to check environment variables (ADMIN ONLY, DEV ONLY)
-router.get('/debug', authenticateJWT, requireAdmin, (req, res) => {
+router.get('/', authenticateJWT, requireAdmin, (req, res) => {
     // Disable in production for security
     if (process.env.NODE_ENV === 'production') {
         return res.status(403).json({

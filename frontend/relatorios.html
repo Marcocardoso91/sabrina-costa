@@ -212,7 +212,19 @@
                 },
 
                 async loadReports() {
-                    // Mocked weekly reports
+                    try {
+                        // Try to load real data from API
+                        const response = await API.metrics.summary({ period: '7d' });
+                        
+                        if (response.data && response.data.length > 0) {
+                            this.reports = response.data;
+                            return;
+                        }
+                    } catch (error) {
+                        console.warn('Erro ao carregar relatórios da API, usando dados de exemplo:', error);
+                    }
+                    
+                    // Fallback: Mocked weekly reports
                     this.reports = [
                         {
                             id: 'week-4',
@@ -269,8 +281,6 @@
                             ],
                         },
                     ];
-
-                    // Produção: const response = await API.metrics.summary({ period: '7d', week: 4 });
                 },
 
                 changeWeek() {

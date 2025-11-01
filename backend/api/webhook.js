@@ -27,7 +27,9 @@ function parseNumber(value) {
     if (value === undefined || value === null || value === '') {
         return null;
     }
-    const num = Number(value);
+    // Normalize Brazilian format: replace comma with dot
+    const normalized = typeof value === 'string' ? value.replace(',', '.') : value;
+    const num = Number(normalized);
     return Number.isNaN(num) ? null : num;
 }
 

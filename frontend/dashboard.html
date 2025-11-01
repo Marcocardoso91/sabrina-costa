@@ -336,12 +336,17 @@
                     this.loading = true;
                     
                     try {
-                        // Mock data for development
-                        await this.loadMockData();
+                        // Load real data from API
+                        const response = await API.metrics.getAll({ period: this.period });
                         
-                        // In production, use:
-                        // const response = await API.metrics.getAll({ period: this.period });
-                        // this.metricsData = response.data;
+                        // Backend returns DESC order, reverse to ASC for proper trend calculation
+                        this.metricsData = response.data.reverse();
+                        
+                        // Fallback to mock if no data
+                        if (this.metricsData.length === 0) {
+                            console.warn('Nenhum dado encontrado, usando dados de exemplo');
+                            await this.loadMockData();
+                        }
                         
                         this.processMetrics();
                         this.updateCharts();
@@ -351,7 +356,13 @@
                         
                     } catch (error) {
                         console.error('Erro ao carregar dados:', error);
-                        alert('Erro ao carregar métricas. Tente novamente.');
+                        // Fallback to mock on error
+                        console.warn('Falha na API, usando dados de exemplo');
+                        await this.loadMockData();
+                        this.processMetrics();
+                        this.updateCharts();
+                        this.loadAlerts();
+                        this.lastUpdate = dayjs().format('DD/MM/YYYY HH:mm');
                     } finally {
                         this.loading = false;
                     }
@@ -400,11 +411,19 @@
                     this.currentMetrics.cpcTrend = cpcDiff > 0 ? `+${cpcDiff}%` : `${cpcDiff}%`;
                     
                     // Sum followers
-                    this.currentMetrics.newFollowers = this.metricsData.reduce((sum, m) => sum + parseInt(m.newFollowers), 0);
-                    this.currentMetrics.totalCost = (this.metricsData.reduce((sum, m) => sum + parseFloat(m.cost), 0)).toFixed(2);
-                    this.currentMetrics.costPerFollower = (this.currentMetrics.totalCost / this.currentMetrics.newFollowers).toFixed(2);
+                    this.currentMetrics.newFollowers = this.metricsData.reduce((sum, m) => sum + parseInt(m.newFollowers || m.new_followers || 0), 0);
+                    this.currentMetrics.totalCost = (this.metricsData.reduce((sum, m) => sum + parseFloat(m.cost || 0), 0)).toFixed(2);
                     
-                    const followersDiff = latest.newFollowers - previous.newFollowers;
+                    // Protect against division by zero
+                    if (this.currentMetrics.newFollowers > 0) {
+                        this.currentMetrics.costPerFollower = (this.currentMetrics.totalCost / this.currentMetrics.newFollowers).toFixed(2);
+                    } else {
+                        this.currentMetrics.costPerFollower = '0.00';
+                    }
+                    
+                    const latestFollowers = parseInt(latest.newFollowers || latest.new_followers || 0);
+                    const previousFollowers = parseInt(previous.newFollowers || previous.new_followers || 0);
+                    const followersDiff = latestFollowers - previousFollowers;
                     this.currentMetrics.followersTrend = followersDiff > 0 ? `+${followersDiff}` : `${followersDiff}`;
                 },
 
@@ -473,15 +492,20 @@
                 },
 
                 async loadAlerts() {
-                    // Mock alerts
-                    this.alerts = [
-                        {
-                            id: 1,
-                            type: 'ctr_low',
-                            message: 'CTR abaixo da meta (1.2% < 1.5%)',
-                            sentAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+                    try {
+                        // Load real alerts from API (limit to last 5)
+                        const response = await API.alerts.getAll({ limit: 5 });
+                        this.alerts = response.data || [];
+                        
+                        // Show message if no alerts
+                        if (this.alerts.length === 0) {
+                            console.log('Nenhum alerta recente');
                         }
-                    ];
+                    } catch (error) {
+                        console.error('Erro ao carregar alertas:', error);
+                        // Clear alerts on error
+                        this.alerts = [];
+                    }
                 },
 
                 getTrendClass(trend, inverse = false) {

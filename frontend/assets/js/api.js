@@ -39,10 +39,21 @@ class APIClient {
     // Generic HTTP request
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+        
+        // Fallback for browsers without AbortSignal.timeout (Safari/iOS)
+        let signal;
+        if (typeof AbortSignal.timeout === 'function') {
+            signal = AbortSignal.timeout(this.timeout);
+        } else {
+            const controller = new AbortController();
+            signal = controller.signal;
+            setTimeout(() => controller.abort(), this.timeout);
+        }
+        
         const config = {
             ...options,
             headers: this.buildHeaders(options.headers),
-            signal: AbortSignal.timeout(this.timeout)
+            signal
         };
 
         try {

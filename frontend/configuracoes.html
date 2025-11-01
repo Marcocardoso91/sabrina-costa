@@ -340,18 +340,48 @@
                     this.loadConfig();
                 },
 
-                loadConfig() {
-                    // Mock: em produção chamaríamos API.config.getAll() e API.alerts.getConfig()
-                    this.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-                    this.forms = {
-                        thresholds: { ...this.config.thresholds },
-                        whatsapp: { ...this.config.whatsapp },
-                        schedule: {
-                            ...this.config.schedule,
-                            postReminders: [...(this.config.schedule.postReminders || [])],
-                        },
-                        general: { ...this.config.general },
-                    };
+                async loadConfig() {
+                    try {
+                        // Load real config from API
+                        const [configResponse, alertsResponse] = await Promise.all([
+                            API.config.getAll().catch(() => ({ data: [] })),
+                            API.alerts.getConfig().catch(() => ({ data: {} }))
+                        ]);
+                        
+                        // Merge API data with defaults
+                        const apiConfig = configResponse.data?.[0] || {};
+                        const alertsConfig = alertsResponse.data || {};
+                        
+                        this.config = {
+                            ...DEFAULT_CONFIG,
+                            ...apiConfig,
+                            thresholds: { ...DEFAULT_CONFIG.thresholds, ...alertsConfig.thresholds },
+                            whatsapp: { ...DEFAULT_CONFIG.whatsapp, ...alertsConfig.whatsapp }
+                        };
+                        
+                        this.forms = {
+                            thresholds: { ...this.config.thresholds },
+                            whatsapp: { ...this.config.whatsapp },
+                            schedule: {
+                                ...this.config.schedule,
+                                postReminders: [...(this.config.schedule.postReminders || [])],
+                            },
+                            general: { ...this.config.general },
+                        };
+                    } catch (error) {
+                        console.error('Erro ao carregar configurações:', error);
+                        // Fallback to defaults
+                        this.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+                        this.forms = {
+                            thresholds: { ...this.config.thresholds },
+                            whatsapp: { ...this.config.whatsapp },
+                            schedule: {
+                                ...this.config.schedule,
+                                postReminders: [...(this.config.schedule.postReminders || [])],
+                            },
+                            general: { ...this.config.general },
+                        };
+                    }
                 },
 
                 resetForms() {
@@ -368,40 +398,78 @@
                 async saveAlertsConfig() {
                     this.saving.alerts = true;
                     this.clearFeedback();
-                    setTimeout(() => {
+                    
+                    try {
+                        // Validate numeric values
+                        if (this.forms.thresholds.ctrMin < 0 || this.forms.thresholds.ctrMin > 100) {
+                            throw new Error('CTR mínimo deve estar entre 0 e 100');
+                        }
+                        if (this.forms.thresholds.cpcMax < 0) {
+                            throw new Error('CPC máximo deve ser positivo');
+                        }
+                        
+                        await API.alerts.updateConfig({ 
+                            thresholds: this.forms.thresholds, 
+                            whatsapp: this.forms.whatsapp 
+                        });
+                        
                         this.config.thresholds = { ...this.forms.thresholds };
                         this.config.whatsapp = { ...this.forms.whatsapp };
                         this.feedback.alerts = 'Alertas atualizados com sucesso!';
+                    } catch (error) {
+                        console.error('Erro ao salvar alertas:', error);
+                        this.feedback.alerts = `Erro: ${error.message || 'Não foi possível salvar as configurações'}`;
+                    } finally {
                         this.saving.alerts = false;
-                        // Produção:
-                        // await API.alerts.updateConfig({ thresholds: this.forms.thresholds, whatsapp: this.forms.whatsapp });
-                    }, 600);
+                    }
                 },
 
                 async saveScheduleConfig() {
                     this.saving.schedule = true;
                     this.clearFeedback();
-                    setTimeout(() => {
+                    
+                    try {
+                        // Note: This updates the config table. n8n workflows may need manual reload
+                        await API.config.put({
+                            key: 'schedule',
+                            value: {
+                                ...this.forms.schedule,
+                                postReminders: [...(this.forms.schedule.postReminders || [])],
+                            }
+                        });
+                        
                         this.config.schedule = {
                             ...this.forms.schedule,
                             postReminders: [...(this.forms.schedule.postReminders || [])],
                         };
-                        this.feedback.schedule = 'Rotinas atualizadas. Recarregue os fluxos no n8n.';
+                        this.feedback.schedule = 'Rotinas atualizadas com sucesso!';
+                    } catch (error) {
+                        console.error('Erro ao salvar rotinas:', error);
+                        this.feedback.schedule = `Erro: ${error.message || 'Não foi possível salvar as configurações'}`;
+                    } finally {
                         this.saving.schedule = false;
-                        // Produção: salvar em config table / n8n webhook
-                    }, 600);
+                    }
                 },
 
                 async saveGeneralConfig() {
                     this.saving.general = true;
                     this.clearFeedback();
-                    setTimeout(() => {
+                    
+                    try {
+                        await API.config.put({
+                            key: 'general',
+                            value: this.forms.general
+                        });
+                        
                         this.config.general = { ...this.forms.general };
                         this.config.updatedAt = new Date().toISOString();
-                        this.feedback.general = 'Configurações salvas!';
+                        this.feedback.general = 'Configurações salvas com sucesso!';
+                    } catch (error) {
+                        console.error('Erro ao salvar configurações:', error);
+                        this.feedback.general = `Erro: ${error.message || 'Não foi possível salvar as configurações'}`;
+                    } finally {
                         this.saving.general = false;
-                        // Produção: await API.config.put(this.forms.general);
-                    }, 600);
+                    }
                 },
 
                 addReminder() {

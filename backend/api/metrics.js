@@ -21,6 +21,10 @@ router.get('/', async (req, res, next) => {
     try {
         const { date, period, startDate, endDate, limit = 30, offset = 0 } = req.query;
         
+        // Sanitize limit and offset to prevent SQL errors
+        const safeLimit = Math.min(Math.max(Number(limit) || 30, 1), 200);
+        const safeOffset = Math.max(Number(offset) || 0, 0);
+        
         let sql = 'SELECT * FROM metrics WHERE 1=1';
         const params = [];
         let paramIndex = 1;
@@ -56,7 +60,7 @@ router.get('/', async (req, res, next) => {
         
         sql += ' ORDER BY date DESC';
         sql += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-        params.push(parseInt(limit), parseInt(offset));
+        params.push(safeLimit, safeOffset);
         
         const result = await query(sql, params);
         
@@ -91,10 +95,37 @@ router.get('/', async (req, res, next) => {
             data: result.rows,
             pagination: {
                 total,
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                hasMore: (parseInt(offset) + result.rows.length) < total
+                limit: safeLimit,
+                offset: safeOffset,
+                hasMore: (safeOffset + result.rows.length) < total
             }
+        });
+        
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * GET /api/metrics/:id
+ * Get a specific metric by ID
+ */
+router.get('/:id', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await query('SELECT * FROM metrics WHERE id = $1', [id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Métrica não encontrada'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: result.rows[0]
         });
         
     } catch (error) {
@@ -209,12 +240,12 @@ router.put('/:id', async (req, res, next) => {
         }
         
         // Recalculate cost_per_follower if cost or newFollowers changed
-        if (updateFields.cost || updateFields.newFollowers) {
+        if (updateFields.cost !== undefined || updateFields.newFollowers !== undefined) {
             // Get current values
             const current = await query('SELECT cost, new_followers FROM metrics WHERE id = $1', [id]);
             if (current.rows.length > 0) {
-                const finalCost = updateFields.cost || current.rows[0].cost;
-                const finalFollowers = updateFields.newFollowers || current.rows[0].new_followers;
+                const finalCost = updateFields.cost !== undefined ? updateFields.cost : current.rows[0].cost;
+                const finalFollowers = updateFields.newFollowers !== undefined ? updateFields.newFollowers : current.rows[0].new_followers;
                 const costPerFollower = finalFollowers > 0 ? (finalCost / finalFollowers).toFixed(2) : null;
                 updates.push(`cost_per_follower = $${paramIndex++}`);
                 values.push(costPerFollower);
